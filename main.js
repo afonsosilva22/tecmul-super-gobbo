@@ -10,15 +10,7 @@ function preload() {
 
 function create() {
 
-    // ====================
-    // PLAYER
-    // ====================
-    gameState.player = this.physics.add.sprite(
-        100, // x
-        300, // y
-        'idle' // texture
-    );
-    gameState.player.body.setCollideWorldBounds(true);
+    
 
     // ====================
     // ANIMATIONS
@@ -76,7 +68,7 @@ function create() {
     this.physics.add.existing(gameState.ground, true);
 
     // ====================
-    // ADDING WORLD OBSTACLES (New Section)
+    // ADDING WORLD OBSTACLES
     // ====================
     // Create a static group to hold all our environment blocks
     const platforms = this.physics.add.staticGroup();
@@ -96,6 +88,34 @@ function create() {
     }
 
     // ====================
+    // VINES
+    // ====================
+    // Create a static group for vines (no physics engine collisions, just tracking positions)
+    gameState.vines = this.physics.add.staticGroup();
+
+    // Let's place 5 long, dark green vines hanging down from platforms or mid-air
+    for (let i = 0; i < 5; i++) {
+        const vineX = Phaser.Math.Between(500, 2500);
+        const vineY = 200; // mid-air
+        const vineWidth = 50;
+        const vineHeight = 240; // long vine
+
+        // 0x1a4314 is a dark forest green
+        const vine = this.add.rectangle(vineX, vineY, vineWidth, vineHeight, 0x1a4314);
+        gameState.vines.add(vine);
+    }
+
+    // ====================
+    // PLAYER
+    // ====================
+    gameState.player = this.physics.add.sprite(
+        100, // x
+        300, // y
+        'idle' // texture
+    );
+    gameState.player.body.setCollideWorldBounds(true);
+
+    // ====================
     // COLLISIONS
     // ====================
     this.physics.add.collider(
@@ -106,6 +126,12 @@ function create() {
         gameState.player, 
         platforms
     );
+
+    gameState.onVine = false;
+
+    this.physics.add.overlap(gameState.player, gameState.vines, () => {
+        gameState.onVine = true;
+    });
 
     // ====================
     // CAMERA AND BOUNDARIES
@@ -134,7 +160,31 @@ function update() {
     const speed = isSprinting ? sprintSpeed : walkSpeed;
     
     const jumpPower = -300;
+    const climbSpeed = -100;
     const onGround = player.body.touching.down;
+
+    const touchingVine = gameState.onVine;
+    gameState.onVine = false; // reset for next frame
+
+    // ====================
+    // CLIMBING LOGIC
+    // ====================
+    if (touchingVine && gameState.cursors.up.isDown) {
+        // Disable gravity briefly so the player doesn't slide down while trying to climb
+        player.body.setAllowGravity(false);
+        player.body.setVelocityY(climbSpeed);
+        
+        // Optional: Play your walk or jump animation to show climbing effort
+        player.anims.play('walk', true); 
+    } else if (touchingVine && !onGround) {
+        // If touching a vine in mid-air but NOT pressing up, hold onto it (suspend gravity)
+        player.body.setAllowGravity(false);
+        player.body.setVelocityY(0); 
+        player.anims.play('idle', true);
+    } else {
+        // Turn gravity back on if we walk away or land on the ground
+        player.body.setAllowGravity(true);
+    }
 
     // ====================
     // MOVEMENT
