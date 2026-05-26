@@ -76,12 +76,36 @@ function create() {
     this.physics.add.existing(gameState.ground, true);
 
     // ====================
+    // ADDING WORLD OBSTACLES (New Section)
+    // ====================
+    // Create a static group to hold all our environment blocks
+    const platforms = this.physics.add.staticGroup();
+
+    // Generate 15 random platforms across the 3000px wide world
+    for (let i = 0; i < 15; i++) {
+        // Generate random coordinates (avoiding the starting area)
+        const randomX = Phaser.Math.Between(400, 2800);
+        const randomY = Phaser.Math.Between(150, 280);
+        const randomWidth = Phaser.Math.Between(60, 150);
+    
+        // Create a visual rectangle block
+        const block = this.add.rectangle(randomX, randomY, randomWidth, 20, 0x7a5230);
+    
+        // Add it to our physics group so the player can land on it
+        platforms.add(block);
+    }
+
+    // ====================
     // COLLISIONS
     // ====================
     this.physics.add.collider(
         gameState.player, 
         gameState.ground
-    );    
+    );
+    this.physics.add.collider(
+        gameState.player, 
+        platforms
+    );
 
     // ====================
     // CAMERA AND BOUNDARIES
