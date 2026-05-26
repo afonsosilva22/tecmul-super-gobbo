@@ -67,9 +67,9 @@ function create() {
     // GROUND
     // ====================
     gameState.ground = this.add.rectangle(
-        320, // x
+        1500, // x
         340, // y
-        640, // width
+        3000, // width
         40, // height
         0x00ff00 // color
     );
@@ -81,7 +81,17 @@ function create() {
     this.physics.add.collider(
         gameState.player, 
         gameState.ground
-    );
+    );    
+
+    // ====================
+    // CAMERA AND BOUNDARIES
+    // ====================
+    // 1. Tells the physics system how big the total playable area is (3000px wide, 360px high)
+    this.physics.world.setBounds(0, 0, 3000, 360);
+    // 2. Tells the main camera to mirror those same boundaries
+    this.cameras.main.setBounds(0, 0, 3000, 360);
+    // 3. Makes the camera follow the player sprite
+    this.cameras.main.startFollow(gameState.player, true, 0.05, 0.05);
 
     // ====================
     // INPUT
@@ -99,7 +109,7 @@ function update() {
     const isSprinting = gameState.shiftKey.isDown;
     const speed = isSprinting ? sprintSpeed : walkSpeed;
     
-    const jumpPower = -200;
+    const jumpPower = -300;
     const onGround = player.body.touching.down;
 
     // ====================
@@ -155,7 +165,7 @@ const config = {
     physics: {
         default: 'arcade',
         arcade: {
-            gravity: {y: 290},
+            gravity: {y: 500},
 			debug: false,
 		}
 	},
