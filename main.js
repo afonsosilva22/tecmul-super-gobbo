@@ -6,11 +6,10 @@ function preload() {
     this.load.spritesheet('walk', 'assets/Gobbo_Walk_6.png', { frameWidth: 32, frameHeight: 32 });
     this.load.spritesheet('sprint', 'assets/Gobbo_Run_6.png', { frameWidth: 32, frameHeight: 32 });
     this.load.spritesheet('jump', 'assets/Gobbo_Jump_8.png', { frameWidth: 32, frameHeight: 32 });
+    this.load.spritesheet('climb', 'assets/Gobbo_Climb_4.png', { frameWidth: 32, frameHeight: 32 });
 }
 
 function create() {
-
-    
 
     // ====================
     // ANIMATIONS
@@ -50,6 +49,16 @@ function create() {
         frames: this.anims.generateFrameNumbers('jump', {
             start: 0,
             end: 7
+        }),
+        frameRate: 10,
+        repeat: -1
+    });
+
+    this.anims.create({
+        key: 'climb',
+        frames: this.anims.generateFrameNumbers('climb', {
+            start: 0,
+            end: 3
         }),
         frameRate: 10,
         repeat: -1
@@ -160,29 +169,34 @@ function update() {
     const speed = isSprinting ? sprintSpeed : walkSpeed;
     
     const jumpPower = -300;
-    const climbSpeed = -100;
     const onGround = player.body.touching.down;
 
+    const climbUpSpeed = -100;
+    const climbDownSpeed = 100;
     const touchingVine = gameState.onVine;
     gameState.onVine = false; // reset for next frame
 
     // ====================
     // CLIMBING LOGIC
     // ====================
+    let isClimbing = false; // Track if climbing logic is active
+
     if (touchingVine && gameState.cursors.up.isDown) {
-        // Disable gravity briefly so the player doesn't slide down while trying to climb
         player.body.setAllowGravity(false);
-        player.body.setVelocityY(climbSpeed);
-        
-        // Optional: Play your walk or jump animation to show climbing effort
-        player.anims.play('walk', true); 
+        player.body.setVelocityY(climbUpSpeed);
+        player.anims.play('climb', true); 
+        isClimbing = true;
+    } else if (touchingVine && gameState.cursors.down.isDown) {
+        player.body.setAllowGravity(false);
+        player.body.setVelocityY(climbDownSpeed);
+        player.anims.play('climb', true); 
+        isClimbing = true;
     } else if (touchingVine && !onGround) {
-        // If touching a vine in mid-air but NOT pressing up, hold onto it (suspend gravity)
         player.body.setAllowGravity(false);
         player.body.setVelocityY(0); 
-        player.anims.play('idle', true);
+        player.anims.play('climb', true);
+        isClimbing = true;
     } else {
-        // Turn gravity back on if we walk away or land on the ground
         player.body.setAllowGravity(true);
     }
 
@@ -193,31 +207,37 @@ function update() {
         player.body.setVelocityX(-speed);
         player.setFlipX(true);
 
-        if (!onGround) {
-            player.anims.play('jump', true);
-        } else if (isSprinting) {
-            player.anims.play('sprint', true);
-        } else {
-            player.anims.play('walk', true);
+        if (!isClimbing) {
+            if (!onGround) {
+                player.anims.play('jump', true);
+            } else if (isSprinting) {
+                player.anims.play('sprint', true);
+            } else {
+                player.anims.play('walk', true);
+            }
         }
     } else if (gameState.cursors.right.isDown) {
         player.body.setVelocityX(speed);
         player.setFlipX(false);
 
-        if (!onGround) {
-            player.anims.play('jump', true);
-        } else if (isSprinting) {
-            player.anims.play('sprint', true);
-        } else {
-            player.anims.play('walk', true);
+        if (!isClimbing) {
+            if (!onGround) {
+                player.anims.play('jump', true);
+            } else if (isSprinting) {
+                player.anims.play('sprint', true);
+            } else {
+                player.anims.play('walk', true);
+            }
         }
     } else {
         player.body.setVelocityX(0);
         
-        if (!onGround) {
-            player.anims.play('jump', true);
-        } else {
-            player.anims.play('idle', true);
+        if (!isClimbing) {
+            if (!onGround) {
+                player.anims.play('jump', true);
+            } else {
+                player.anims.play('idle', true);
+            }
         }
     }
 
