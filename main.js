@@ -7,6 +7,8 @@ function preload() {
     this.load.spritesheet('sprint', 'assets/Gobbo_Run_6.png', { frameWidth: 32, frameHeight: 32 });
     this.load.spritesheet('jump', 'assets/Gobbo_Jump_8.png', { frameWidth: 32, frameHeight: 32 });
     this.load.spritesheet('climb', 'assets/Gobbo_Climb_4.png', { frameWidth: 32, frameHeight: 32 });
+    this.load.spritesheet('push', 'assets/Gobbo_Push_6.png', { frameWidth: 32, frameHeight: 32 });
+    this.load.spritesheet('punch', 'assets/Gobbo_Punch_4.png', { frameWidth: 32, frameHeight: 32 });
 }
 
 function create() {
@@ -64,6 +66,25 @@ function create() {
         repeat: -1
     });
 
+    this.anims.create({
+        key: 'push',
+        frames: this.anims.generateFrameNumbers('push', { 
+            start: 0, 
+            end: 5 }),
+        frameRate: 8,
+        repeat: -1
+    });
+
+    this.anims.create({
+        key: 'punch',
+        frames: this.anims.generateFrameNumbers('punch', {
+            start: 0,
+            end: 3
+        }),
+        frameRate: 12,
+        repeat: 0
+    });
+
     // ====================
     // GROUND
     // ====================
@@ -77,10 +98,68 @@ function create() {
     this.physics.add.existing(gameState.ground, true);
 
     // ====================
-    // ADDING WORLD OBSTACLES
+    // VINES
+    // ====================
+    // Create a static group for vines (no physics engine collisions, just tracking positions)
+    gameState.vines = this.physics.add.staticGroup();
+
+    // Let's place 5 long, dark green vines hanging down from platforms or mid-air
+    for (let i = 0; i < 5; i++) {
+        const vineX = Phaser.Math.Between(500, 2500);
+        const vineY = 200; // mid-air
+        const vineWidth = 30;
+        const vineHeight = 240; // long vine
+
+        // 0x1a4314 is a dark forest green
+        const vine = this.add.rectangle(vineX, vineY, vineWidth, vineHeight, 0x1a4314);
+        gameState.vines.add(vine);
+    }
+
+        // ====================
+    // PUSHABLE BOXES
+    // ====================
+    gameState.boxes = this.physics.add.group();
+
+    const boxPositions = [600, 900, 1200, 1600, 2000];
+    for (let i = 0; i < boxPositions.length; i++) {
+        const box = this.add.rectangle(
+            boxPositions[i],
+            310,          // sits on ground
+            24, 24,       // width, height
+            0x7a3b0a      // dark brown
+        );
+        this.physics.add.existing(box);
+        box.body.setCollideWorldBounds(true);
+        box.body.setDragX(400);   // friction — box slows to a stop
+        box.body.setMaxVelocityX(200);
+        box.body.setBounce(0.1);  // very slight bounce
+        box.body.setMass(2);      // heavier than player push force
+        gameState.boxes.add(box);
+    }
+
+    // ====================
+    // BREAKABLE BOXES
+    // ====================
+    gameState.breakableBoxes = this.physics.add.staticGroup();
+
+    const breakablePositions = [750, 1100, 1450, 1850];
+    for (let i = 0; i < breakablePositions.length; i++) {
+        const box = this.add.rectangle(
+            breakablePositions[i],
+            318, 24, 24,
+            0xff3333 // red
+        );
+
+        this.physics.add.existing(box, true); // static
+        box.hp = 3;
+        gameState.breakableBoxes.add(box);
+    }
+
+    // ====================
+    // ADDING OBSTACLES
     // ====================
     // Create a static group to hold all our environment blocks
-    const platforms = this.physics.add.staticGroup();
+    gameState.platforms = this.physics.add.staticGroup();
 
     // Generate 15 random platforms across the 3000px wide world
     for (let i = 0; i < 15; i++) {
@@ -93,25 +172,7 @@ function create() {
         const block = this.add.rectangle(randomX, randomY, randomWidth, 20, 0x7a5230);
     
         // Add it to our physics group so the player can land on it
-        platforms.add(block);
-    }
-
-    // ====================
-    // VINES
-    // ====================
-    // Create a static group for vines (no physics engine collisions, just tracking positions)
-    gameState.vines = this.physics.add.staticGroup();
-
-    // Let's place 5 long, dark green vines hanging down from platforms or mid-air
-    for (let i = 0; i < 5; i++) {
-        const vineX = Phaser.Math.Between(500, 2500);
-        const vineY = 200; // mid-air
-        const vineWidth = 50;
-        const vineHeight = 240; // long vine
-
-        // 0x1a4314 is a dark forest green
-        const vine = this.add.rectangle(vineX, vineY, vineWidth, vineHeight, 0x1a4314);
-        gameState.vines.add(vine);
+        gameState.platforms.add(block);
     }
 
     // ====================
@@ -131,16 +192,29 @@ function create() {
         gameState.player, 
         gameState.ground
     );
+    
     this.physics.add.collider(
         gameState.player, 
-        platforms
+        gameState.platforms
     );
-
-    gameState.onVine = false;
 
     this.physics.add.overlap(gameState.player, gameState.vines, () => {
         gameState.onVine = true;
     });
+
+    // Box collides with ground and platforms
+    this.physics.add.collider(gameState.boxes, gameState.ground);
+    this.physics.add.collider(gameState.boxes, gameState.platforms);
+
+    // Boxes collide with each other (so they stack / push each other)
+    this.physics.add.collider(gameState.boxes, gameState.boxes);
+
+    this.physics.add.collider(gameState.player, gameState.boxes, () => {
+        gameState.pushingBox = true;
+    });
+
+    this.physics.add.collider(gameState.player, gameState.breakableBoxes);
+    this.physics.add.collider(gameState.boxes, gameState.breakableBoxes);
 
     // ====================
     // CAMERA AND BOUNDARIES
@@ -157,6 +231,10 @@ function create() {
     // ====================
     gameState.cursors = this.input.keyboard.createCursorKeys();
     gameState.shiftKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT);
+
+    gameState.punchKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Z);
+    gameState.isPunching = false;
+    gameState.punchCooldown = 0;
 }
 
 function update() {
@@ -166,7 +244,7 @@ function update() {
     const walkSpeed = 170;
     const sprintSpeed = 260;
     const isSprinting = gameState.shiftKey.isDown;
-    const speed = isSprinting ? sprintSpeed : walkSpeed;
+    
     
     const jumpPower = -300;
     const onGround = player.body.touching.down;
@@ -175,6 +253,19 @@ function update() {
     const climbDownSpeed = 100;
     const touchingVine = gameState.onVine;
     gameState.onVine = false; // reset for next frame
+
+    const isPushing = gameState.pushingBox;
+    gameState.pushingBox = false; // reset for next frame
+
+    const speed = isSprinting ? sprintSpeed : isPushing ? walkSpeed * 0.75 : walkSpeed;
+
+    // Tick down punch cooldown
+    if (gameState.punchCooldown > 0) gameState.punchCooldown--;
+
+    // Trigger punch
+    if (Phaser.Input.Keyboard.JustDown(gameState.punchKey)) {
+        doPunch(this);
+    }
 
     // ====================
     // CLIMBING LOGIC
@@ -207,9 +298,11 @@ function update() {
         player.body.setVelocityX(-speed);
         player.setFlipX(true);
 
-        if (!isClimbing) {
+        if (!isClimbing && !gameState.isPunching) {
             if (!onGround) {
                 player.anims.play('jump', true);
+            } else if (isPushing) {
+                player.anims.play('push', true);
             } else if (isSprinting) {
                 player.anims.play('sprint', true);
             } else {
@@ -220,9 +313,11 @@ function update() {
         player.body.setVelocityX(speed);
         player.setFlipX(false);
 
-        if (!isClimbing) {
+        if (!isClimbing && !gameState.isPunching) {
             if (!onGround) {
                 player.anims.play('jump', true);
+            } else if (isPushing) {
+                player.anims.play('push', true);
             } else if (isSprinting) {
                 player.anims.play('sprint', true);
             } else {
@@ -232,7 +327,7 @@ function update() {
     } else {
         player.body.setVelocityX(0);
         
-        if (!isClimbing) {
+        if (!isClimbing && !gameState.isPunching) {
             if (!onGround) {
                 player.anims.play('jump', true);
             } else {
@@ -247,6 +342,48 @@ function update() {
     if (gameState.cursors.up.isDown && onGround) {
         player.body.setVelocityY(jumpPower);
     }
+
+    gameState.boxes.getChildren().forEach(box => {
+        box.body.setVelocityX(box.body.velocity.x * 0.75);
+    });
+}
+
+function doPunch(scene) {
+    if (gameState.isPunching || gameState.punchCooldown > 0) return;
+
+    gameState.isPunching = true;
+    gameState.punchCooldown = 40; // frames before you can punch again
+
+    const player = gameState.player;
+    player.anims.play('punch', true);
+
+    // Hitbox appears in front of the player
+    const facing = player.flipX ? -1 : 1;
+    const hitX = player.x + facing * 20;
+    const hitY = player.y;
+
+    // Check all breakable boxes for overlap with the hitbox
+    gameState.breakableBoxes.getChildren().forEach(box => {
+        const dist = Phaser.Math.Distance.Between(hitX, hitY, box.x, box.y);
+        if (dist < 28) {
+            box.hp -= 1;
+
+            // Flash white
+            box.setFillStyle(0xffffff);
+            scene.time.delayedCall(80, () => {
+                if (box.active) box.setFillStyle(0xff3333);
+            });
+
+            if (box.hp <= 0) {
+                box.destroy();
+            }
+        }
+    });
+
+    // After animation ends, clear punching state
+    player.once('animationcomplete-punch', () => {
+        gameState.isPunching = false;
+    });
 }
 
 const config = {
