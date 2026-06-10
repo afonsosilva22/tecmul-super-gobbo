@@ -10,38 +10,87 @@ class MainMenu extends Phaser.Scene {
 
     create() {
         // Altera a cor de fundo apenas para o ecrã do menu
-        this.cameras.main.setBackgroundColor('#1a1a1a');
+        this.cameras.main.setBackgroundColor('#1a1a1a'); // Um cinzento ligeiramente mais escuro para dar contraste
 
-        // Adiciona o título do jogo centralizado
+        // Adiciona o título do jogo centralizado com um estilo mais polido
         this.add.text(320, 80, 'SUPER GOBBO', { 
             fontSize: '42px', 
             fill: '#ffffff',
-            fontStyle: 'bold'
+            fontStyle: 'bold',
+            fontFamily: 'monospace', // Fonte que combina mais com estilo pixel/retro
+            shadow: { offsetX: 3, offsetY: 3, color: '#000000', blur: 2, fill: true } // Sombra no título
         }).setOrigin(0.5);
 
-        // Botão Play: Inicia o jogo ao ser clicado
-        const playBtn = this.add.text(320, 180, 'Play', { fontSize: '24px', fill: '#00ff00' }) // Ajustado Y ligeiramente para dar espaço aos novos botões
-            .setOrigin(0.5)
-            .setInteractive({ useHandCursor: true })
-            .on('pointerdown', () => this.scene.start('GameScene')) // Transita para a cena do jogo
-            .on('pointerover', () => playBtn.setStyle({ fill: '#ffff00' })) // Efeito hover (amarelo)
-            .on('pointerout', () => playBtn.setStyle({ fill: '#00ff00' })); // Retorna à cor original
+        // --- FUNÇÃO AUXILIAR PARA CRIAR BOTÕES MODERNOS ---
+        // Isto evita repetir código para cada botão e cria caixas arredondadas com efeitos
+        const createMenuButton = (x, y, text, baseColor, hoverColor, onClickAction, isPlaceholder = false) => {
+            const btnWidth = 200;
+            const btnHeight = 45;
 
-        // NOVO: Placeholder para o botão Options (Futuro)
-        const optionsBtn = this.add.text(320, 230, 'Options', { fontSize: '24px', fill: '#aaaaaa' })
-            .setOrigin(0.5); // Adicionado para estruturar o layout visual futuro
+            // Desenho do fundo do botão usando gráficos nativos do Phaser
+            const btnGraphics = this.add.graphics();
+            
+            // Se for apenas um placeholder (Options/How to Play), desenhamos mais opaco e sem cliques
+            if (isPlaceholder) {
+                btnGraphics.fillStyle(0x333333, 1);
+                btnGraphics.fillRoundedRect(x - btnWidth / 2, y - btnHeight / 2, btnWidth, btnHeight, 8);
+                
+                this.add.text(x, y, text, { 
+                    fontSize: '18px', 
+                    fill: '#777777', 
+                    fontFamily: 'monospace',
+                    fontStyle: 'bold' 
+                }).setOrigin(0.5);
+                
+                return;
+            }
 
-        // NOVO: Placeholder para o botão How to Play (Futuro)
-        const howToPlayBtn = this.add.text(320, 280, 'How to Play', { fontSize: '24px', fill: '#aaaaaa' })
-            .setOrigin(0.5); // Adicionado para estruturar o layout visual futuro
+            // Renderização do botão ativo normal (Play / Quit)
+            btnGraphics.fillStyle(baseColor, 1);
+            btnGraphics.fillRoundedRect(x - btnWidth / 2, y - btnHeight / 2, btnWidth, btnHeight, 8); // Cantos arredondados
 
-        // Botão Quit: Exibe um aviso (browsers não permitem fechar abas diretamente por script)
-        const quitBtn = this.add.text(320, 330, 'Quit', { fontSize: '24px', fill: '#ff0000' }) // Ajustado Y para o fundo do menu
-            .setOrigin(0.5)
-            .setInteractive({ useHandCursor: true })
-            .on('pointerdown', () => alert('Obrigado por jogares!'))
-            .on('pointerover', () => quitBtn.setStyle({ fill: '#ffff00' })) // Efeito hover (amarelo)
-            .on('pointerout', () => quitBtn.setStyle({ fill: '#ff0000' })); // Retorna à cor original
+            // Texto do botão por cima da caixa geométrica
+            const btnText = this.add.text(x, y, text, { 
+                fontSize: '18px', 
+                fill: '#ffffff', 
+                fontFamily: 'monospace',
+                fontStyle: 'bold' 
+            }).setOrigin(0.5);
+
+            // CORREÇÃO: Definir explicitamente as profundidades para o texto ficar à frente dos gráficos
+            btnGraphics.setDepth(0);
+            btnText.setDepth(1);
+
+            // Criar a zona invisível interativa diretamente na cena para gerir os inputs de forma isolada
+            const clickZone = this.add.zone(x, y, btnWidth, btnHeight)
+                .setOrigin(0.5)
+                .setInteractive({ useHandCursor: true })
+                .on('pointerdown', onClickAction)
+                .on('pointerover', () => {
+                    btnGraphics.clear();
+                    btnGraphics.fillStyle(hoverColor, 1); // Muda a cor da caixa no hover
+                    btnGraphics.fillRoundedRect(x - btnWidth / 2, y - btnHeight / 2, btnWidth, btnHeight, 8);
+                    btnText.setStyle({ fill: '#000000' }); // Muda o texto para preto no hover para dar contraste
+                })
+                .on('pointerout', () => {
+                    btnGraphics.clear();
+                    btnGraphics.fillStyle(baseColor, 1); // Restaura a cor original da caixa
+                    btnGraphics.fillRoundedRect(x - btnWidth / 2, y - btnHeight / 2, btnWidth, btnHeight, 8);
+                    btnText.setStyle({ fill: '#ffffff' }); // Restaura o texto para branco
+                });
+        };
+
+        // Botão Play: Inicia o jogo ao ser clicado (Verde escuro -> Verde alface no hover)
+        createMenuButton(320, 160, 'Play', 0x27ae60, 0x2ecc71, () => this.scene.start('GameScene'));
+
+        // Placeholder para o botão Options (Futuro)
+        createMenuButton(320, 215, 'Options', null, null, null, true);
+
+        // Placeholder para o botão How to Play (Futuro)
+        createMenuButton(320, 270, 'How to Play', null, null, null, true);
+
+        // Botão Quit: Exibe um aviso (Vermelho escuro -> Vermelho claro no hover)
+        createMenuButton(320, 325, 'Quit', 0xc0392b, 0xe74c3c, () => alert('Obrigado por jogares!'));
     }
 }
 
