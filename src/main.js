@@ -97,6 +97,9 @@ class GameScene extends Phaser.Scene {
         // Leitura estável a 42x42 píxeis das tuas spritesheets de ataque
         this.load.spritesheet('attack1', 'assets/Gobbo_Attack1.png', { frameWidth: 42, frameHeight: 42 });
         this.load.spritesheet('attack2', 'assets/Gobbo_Attack2.png', { frameWidth: 42, frameHeight: 42 });
+
+        this.load.spritesheet('enemy1_walk', 'assets/enemies/enemy1/enemy1_walk.png', { frameWidth: 128, frameHeight: 128 });
+        this.load.spritesheet('enemy1_attack1', 'assets/enemies/enemy1/enemy1_attack1.png', { frameWidth: 128, frameHeight: 128 });
     }
 
     create() {
@@ -142,8 +145,22 @@ class GameScene extends Phaser.Scene {
 
         this.anims.create({
             key: 'attack2',
-            frames: this.anims.generateFrameNumbers('attack2', { start: 0, end: 5 }), 
-            frameRate: 14, 
+            frames: this.anims.generateFrameNumbers('attack2', { start: 0, end: 5 }),
+            frameRate: 14,
+            repeat: 0
+        });
+
+        this.anims.create({
+            key: 'enemy1_walk',
+            frames: this.anims.generateFrameNumbers('enemy1_walk', { start: 0, end: 8 }),
+            frameRate: 10,
+            repeat: -1
+        });
+
+        this.anims.create({
+            key: 'enemy1_attack1',
+            frames: this.anims.generateFrameNumbers('enemy1_attack1', { start: 0, end: 5 }),
+            frameRate: 10,
             repeat: 0
         });
 
@@ -198,6 +215,43 @@ class GameScene extends Phaser.Scene {
         gameState.onVine = false;
         this.physics.add.overlap(gameState.player, gameState.vines, () => {
             gameState.onVine = true;
+        });
+
+        // ====================
+        // ENEMIES
+        // ====================
+        gameState.enemies = this.physics.add.group();
+
+        const spawnEnemy = (x, patrolStart, patrolEnd) => {
+            const enemy = this.physics.add.sprite(x, 250, 'enemy1_walk');
+            enemy.setScale(0.5);
+            enemy.patrolStart = patrolStart;
+            enemy.patrolEnd = patrolEnd;
+            enemy.patrolSpeed = 80;
+            enemy.patrolDirection = 1;
+            enemy.anims.play('enemy1_walk', true);
+            gameState.enemies.add(enemy);
+            this.physics.add.collider(enemy, gameState.ground);
+            this.physics.add.collider(enemy, platforms);
+        };
+
+        spawnEnemy(600, 480, 760);
+        spawnEnemy(1200, 1050, 1380);
+        spawnEnemy(1800, 1650, 1980);
+
+        gameState.attackHitbox = this.add.rectangle(0, 0, 40, 28);
+        this.physics.add.existing(gameState.attackHitbox, false);
+        gameState.attackHitbox.body.allowGravity = false;
+        gameState.attackHitbox.body.enable = false;
+
+        this.physics.add.overlap(gameState.attackHitbox, gameState.enemies, (hitbox, enemy) => {
+            enemy.destroy();
+        });
+
+        this.physics.add.collider(gameState.player, gameState.enemies, () => {
+            if (!gameState.isAttacking) {
+                this.scene.restart();
+            }
         });
 
         // ====================
@@ -279,6 +333,28 @@ class GameScene extends Phaser.Scene {
 
         const touchingVine = gameState.onVine;
         gameState.onVine = false; 
+
+        // ====================
+        // ENEMY AI
+        // ====================
+        if (gameState.isAttacking) {
+            const dir = gameState.player.flipX ? -1 : 1;
+            gameState.attackHitbox.x = gameState.player.x + dir * 32;
+            gameState.attackHitbox.y = gameState.player.y;
+            gameState.attackHitbox.body.enable = true;
+        } else {
+            gameState.attackHitbox.body.enable = false;
+        }
+
+        gameState.enemies.getChildren().forEach(enemy => {
+            if (enemy.x >= enemy.patrolEnd) {
+                enemy.patrolDirection = -1;
+            } else if (enemy.x <= enemy.patrolStart) {
+                enemy.patrolDirection = 1;
+            }
+            enemy.body.setVelocityX(enemy.patrolSpeed * enemy.patrolDirection);
+            enemy.setFlipX(enemy.patrolDirection === -1);
+        });
 
         if (gameState.isAttacking) {
             return; // Bloqueia novos comandos se estiver a golpear
