@@ -187,9 +187,10 @@ class GameScene extends Phaser.Scene {
         const tsBGForest2   = map.addTilesetImage('backgroundforest2',  'bg_forest2');
         const tsDarkForest2 = map.addTilesetImage('Tiles_DarkForest_2', 'tiles_darkforest');
         const tsBGDeco2     = map.addTilesetImage('background_deco_2',  'bg_deco');
+        const tsBGForest3   = map.addTilesetImage('backgroundforest_3', 'bg_forest');
 
         map.createLayer('Background',       [tsDarkForest, tsBGDeco, tsDarkForest2, tsBGDeco2], 0, 0);
-        map.createLayer('backgroundForest', tsBGForest, 0, 0);
+        map.createLayer('backgroundForest', [tsBGForest, tsBGForest3], 0, 0);
         map.createLayer('BackgroundBush',   tsBGBush,   0, 0);
 
         const platformLayer = map.createLayer('Plataforma', tsDarkForest, 0, 0);
@@ -205,7 +206,7 @@ class GameScene extends Phaser.Scene {
             const tileId = obj.gid ? (obj.gid & 0x0FFFFFFF) : null;
 
             if (!tileId) {
-                // Retângulo invisível — zona de escalada com física
+                // Retângulo invisível 
                 const zone = this.add.rectangle(
                     obj.x + obj.width / 2,
                     obj.y + obj.height / 2,
@@ -214,7 +215,7 @@ class GameScene extends Phaser.Scene {
                 );
                 gameState.vines.add(zone);
             } else {
-                // Tile sprite — visual colocado pelo Tiled
+                //visual colocado pelo Tiled
                 // Em Tiled, tile objects têm y na base do sprite (não no topo)
                 const sx = obj.x + obj.width / 2;
                 const sy = obj.y - obj.height / 2;
@@ -235,14 +236,14 @@ class GameScene extends Phaser.Scene {
         gameState.player = this.physics.add.sprite(100, 300, 'idle');
         gameState.player.body.setCollideWorldBounds(true);
         
-        // Caixa física trancada estável no tamanho original do Gobbo (32x32)
+     //Ajusta o corpo de colisão para ser centralizado, para não ficar preso em cantos ou rampas
         gameState.player.body.setSize(32, 32);
         gameState.player.body.setOffset(0, 0);
 
         // ====================
         // COLLISIONS
         // ====================
-        // CORRIGIDO: Mantemos o colisor sempre ativo, sem nunca o desligar para evitar bugs com spam
+        // Mantemos o colisor sempre ativo, sem nunca o desligar para evitar bugs com spam
         this.physics.add.collider(gameState.player, platformLayer);
 
         gameState.onVine = false;
@@ -258,10 +259,25 @@ class GameScene extends Phaser.Scene {
         const spawnEnemy = (x, patrolStart, patrolEnd) => {
             const enemy = this.physics.add.sprite(x, 250, 'enemy1_walk');
             enemy.setScale(0.5);
+            
+            // setSize usa coordenadas locais (pre-escala): 60×95 local = 30×47 px em écran.
+            // offsetY + bodyHeight = 128 → body.bottom alinha com o fundo do sprite.
+            // offsetX centra a largura: (128-60)/2 = 34.
+            enemy.body.setSize(60, 95);
+            enemy.body.setOffset(34, 33);
+            enemy.body.setCollideWorldBounds(true);
             enemy.patrolStart = patrolStart;
             enemy.patrolEnd = patrolEnd;
             enemy.patrolSpeed = 80;
             enemy.patrolDirection = 1;
+            // Pontos de vida e cooldown de hit para não registar dano múltiplo por golpe
+            enemy.hp    = 3;
+            enemy.maxHp = 3;
+            enemy.hitCooldown = false;
+            // Barra de vida flutuante
+            enemy.hpBarBg   = this.add.rectangle(x, 0, 32, 4, 0x333333).setDepth(5);
+            // origin(0, 0.5): o x do fill é sempre o bordo esquerdo — assim a barra encolhe pela direita
+            enemy.hpBarFill = this.add.rectangle(x - 16, 0, 32, 4, 0xe74c3c).setOrigin(0, 0.5).setDepth(6);
             enemy.anims.play('enemy1_walk', true);
             gameState.enemies.add(enemy);
             this.physics.add.collider(enemy, platformLayer);
@@ -277,14 +293,56 @@ class GameScene extends Phaser.Scene {
         gameState.attackHitbox.body.enable = false;
 
         this.physics.add.overlap(gameState.attackHitbox, gameState.enemies, (hitbox, enemy) => {
-            enemy.destroy();
+            // Cooldown evita que o mesmo golpe tire dano múltiplo em frames consecutivos
+            if (enemy.hitCooldown) return;
+            enemy.hp -= 1;
+            enemy.hitCooldown = true;
+            this.time.delayedCall(400, () => { if (enemy.active) enemy.hitCooldown = false; });
+            if (enemy.hp <= 0) {
+                enemy.hpBarBg.destroy();
+                enemy.hpBarFill.destroy();
+                enemy.destroy();
+            }
         });
 
         this.physics.add.collider(gameState.player, gameState.enemies, () => {
-            if (!gameState.isAttacking) {
+            // Não toma dano se estiver a atacar ou em período de invencibilidade pós-golpe
+            if (gameState.isAttacking || gameState.playerInvincible) return;
+            gameState.playerHP -= 34;
+            gameState.playerInvincible = true;
+            // Flash visual de invencibilidade: pisca 5 vezes durante ~1 segundo
+            this.tweens.add({
+                targets: gameState.player,
+                alpha: 0.3,
+                duration: 100,
+                yoyo: true,
+                repeat: 4,
+                onComplete: () => {
+                    gameState.player.setAlpha(1);
+                    gameState.playerInvincible = false;
+                }
+            });
+            if (gameState.playerHP <= 0) {
                 this.scene.restart();
             }
         });
+
+        // ====================
+        // PLAYER HUD
+        // ====================
+        gameState.playerMaxHP    = 100;
+        gameState.playerHP       = 100;
+        gameState.playerInvincible = false;
+
+        // "HP" label fixo à câmara 
+        this.add.text(10, 10, 'HP', { fontSize: '9px', fill: '#ffffff', fontFamily: 'monospace' })
+            .setScrollFactor(0).setDepth(20);
+        // Fundo cinzento da barra (ligeiramente maior para dar borda)
+        this.add.rectangle(75, 16, 84, 10, 0x333333)
+            .setScrollFactor(0).setDepth(20);
+        // Fill da barra — origin(0, 0.5) para encolher da direita para a esquerda
+        gameState.hpBarFill = this.add.rectangle(35, 16, 80, 8, 0x2ecc71)
+            .setOrigin(0, 0.5).setScrollFactor(0).setDepth(21);
 
         // ====================
         // CAMERA AND BOUNDARIES
@@ -303,7 +361,7 @@ class GameScene extends Phaser.Scene {
 
         this.input.mouse.disableContextMenu(); 
 
-        // Configuração à prova de spam: Congela a posição contra o chão usando immovable
+        // Congela a posição contra o chão usando immovable
         this.input.on('pointerdown', (pointer) => {
             if (!gameState.isAttacking) {
                 const onGround = gameState.player.body.blocked.down;
@@ -314,7 +372,7 @@ class GameScene extends Phaser.Scene {
                     if (onGround) {
                         gameState.player.body.setVelocity(0, 0);
                         gameState.player.body.setAllowGravity(false);
-                        // CORRIGIDO: Torna o corpo imutável temporariamente para o chão não o empurrar para baixo
+                        //Torna o corpo imutável temporariamente para o chão não o empurrar para baixo
                         gameState.player.body.setImmovable(true); 
                     }
 
@@ -379,14 +437,38 @@ class GameScene extends Phaser.Scene {
         }
 
         gameState.enemies.getChildren().forEach(enemy => {
-            if (enemy.x >= enemy.patrolEnd) {
+            // Colisão lateral tem prioridade: parede ou rampa invertem a direção,
+            // sem esperar pelos limites de patrulha (evita ficar preso contra tiles sólidos).
+            if (enemy.body.blocked.right && enemy.patrolDirection === 1) {
+                enemy.patrolDirection = -1;
+            } else if (enemy.body.blocked.left && enemy.patrolDirection === -1) {
+                enemy.patrolDirection = 1;
+            } else if (enemy.x >= enemy.patrolEnd) {
                 enemy.patrolDirection = -1;
             } else if (enemy.x <= enemy.patrolStart) {
                 enemy.patrolDirection = 1;
             }
             enemy.body.setVelocityX(enemy.patrolSpeed * enemy.patrolDirection);
             enemy.setFlipX(enemy.patrolDirection === -1);
+            // Atualiza a barra de HP flutuante acima do inimigo a cada frame
+            const barY = enemy.y - 30;
+            enemy.hpBarBg.setPosition(enemy.x, barY);
+            // x do fill é o bordo esquerdo (origin 0): enemy.x - metade da largura total
+            enemy.hpBarFill.setPosition(enemy.x - 16, barY);
+            enemy.hpBarFill.setSize((enemy.hp / enemy.maxHp) * 32, 4);
         });
+
+        // Atualiza a barra de HP do jogador — largura proporcional ao HP restante
+        const hpPct = Math.max(0, gameState.playerHP / gameState.playerMaxHP);
+        gameState.hpBarFill.setSize(80 * hpPct, 8);
+        // Verde → amarelo → vermelho conforme a vida vai baixando
+        if (hpPct > 0.66) {
+            gameState.hpBarFill.setFillStyle(0x2ecc71);
+        } else if (hpPct > 0.33) {
+            gameState.hpBarFill.setFillStyle(0xf39c12);
+        } else {
+            gameState.hpBarFill.setFillStyle(0xe74c3c);
+        }
 
         if (gameState.isAttacking) {
             return; // Bloqueia novos comandos se estiver a golpear
@@ -462,7 +544,7 @@ const config = {
         default: 'arcade',
         arcade: {
             gravity: {y: 500},
-            debug: false, 
+            debug: true, 
         }
     },
     scene: [MainMenu, GameScene] 
