@@ -100,6 +100,13 @@ class GameScene extends Phaser.Scene {
 
         this.load.spritesheet('enemy1_walk', 'assets/enemies/enemy1/enemy1_walk.png', { frameWidth: 128, frameHeight: 128 });
         this.load.spritesheet('enemy1_attack1', 'assets/enemies/enemy1/enemy1_attack1.png', { frameWidth: 128, frameHeight: 128 });
+
+        this.load.tilemapTiledJSON('map', 'assets/TIlesetMaps/Map1/Mapa1.tmj');
+        this.load.image('tiles_darkforest', 'assets/TIlesetMaps/tiles/Tilesheet - WOODS.png');
+        this.load.image('bg_deco',    'assets/TIlesetMaps/tiles/BACKGROUND.png');
+        this.load.image('bg_bush',    'assets/TIlesetMaps/tiles/BUSH - BACKGROUND.png');
+        this.load.image('bg_forest',  'assets/TIlesetMaps/tiles/WOODS - Second.png');
+        this.load.image('bg_forest2', 'assets/TIlesetMaps/tiles/WOODS - Third.png');
     }
 
     create() {
@@ -167,20 +174,22 @@ class GameScene extends Phaser.Scene {
         // ====================
         // GROUND
         // ====================
-        gameState.ground = this.add.rectangle(1500, 340, 3000, 40, 0x00ff00);
-        this.physics.add.existing(gameState.ground, true);
+        const map = this.make.tilemap({ key: 'map' });
 
-        // ====================
-        // ADDING WORLD OBSTACLES
-        // ====================
-        const platforms = this.physics.add.staticGroup();
-        for (let i = 0; i < 15; i++) {
-            const randomX = Phaser.Math.Between(400, 2800);
-            const randomY = Phaser.Math.Between(150, 280);
-            const randomWidth = Phaser.Math.Between(60, 150);
-            const block = this.add.rectangle(randomX, randomY, randomWidth, 20, 0x7a5230);
-            platforms.add(block);
-        }
+        const tsDarkForest  = map.addTilesetImage('Tiles_DarkForest',   'tiles_darkforest');
+        const tsBGDeco      = map.addTilesetImage('background_deco',   'bg_deco');
+        const tsBGBush      = map.addTilesetImage('backgroundBush',    'bg_bush');
+        const tsBGForest    = map.addTilesetImage('backgroundforest',   'bg_forest');
+        const tsBGForest2   = map.addTilesetImage('backgroundforest2',  'bg_forest2');
+        const tsDarkForest2 = map.addTilesetImage('Tiles_DarkForest_2', 'tiles_darkforest');
+        const tsBGDeco2     = map.addTilesetImage('background_deco_2',  'bg_deco');
+
+        map.createLayer('Background',       [tsDarkForest, tsBGDeco, tsDarkForest2, tsBGDeco2], 0, 0);
+        map.createLayer('backgroundForest', tsBGForest, 0, 0);
+        map.createLayer('BackgroundBush',   tsBGBush,   0, 0);
+
+        const platformLayer = map.createLayer('Plataforma', tsDarkForest, 0, 0);
+        platformLayer.setCollisionByExclusion([-1]);
 
         // ====================
         // VINES
@@ -209,8 +218,7 @@ class GameScene extends Phaser.Scene {
         // COLLISIONS
         // ====================
         // CORRIGIDO: Mantemos o colisor sempre ativo, sem nunca o desligar para evitar bugs com spam
-        this.physics.add.collider(gameState.player, gameState.ground);
-        this.physics.add.collider(gameState.player, platforms);
+        this.physics.add.collider(gameState.player, platformLayer);
 
         gameState.onVine = false;
         this.physics.add.overlap(gameState.player, gameState.vines, () => {
@@ -231,8 +239,7 @@ class GameScene extends Phaser.Scene {
             enemy.patrolDirection = 1;
             enemy.anims.play('enemy1_walk', true);
             gameState.enemies.add(enemy);
-            this.physics.add.collider(enemy, gameState.ground);
-            this.physics.add.collider(enemy, platforms);
+            this.physics.add.collider(enemy, platformLayer);
         };
 
         spawnEnemy(600, 480, 760);
@@ -257,8 +264,8 @@ class GameScene extends Phaser.Scene {
         // ====================
         // CAMERA AND BOUNDARIES
         // ====================
-        this.physics.world.setBounds(0, 0, 3000, 360);
-        this.cameras.main.setBounds(0, 0, 3000, 360);
+        this.physics.world.setBounds(0, 0, 3520, 640);
+        this.cameras.main.setBounds(0, 0, 3520, 640);
         this.cameras.main.startFollow(gameState.player, true, 0.05, 0.05);
 
         // ====================
@@ -274,7 +281,7 @@ class GameScene extends Phaser.Scene {
         // Configuração à prova de spam: Congela a posição contra o chão usando immovable
         this.input.on('pointerdown', (pointer) => {
             if (!gameState.isAttacking) {
-                const onGround = gameState.player.body.touching.down;
+                const onGround = gameState.player.body.blocked.down;
 
                 if (pointer.leftButtonDown()) {
                     gameState.isAttacking = true; 
@@ -329,7 +336,7 @@ class GameScene extends Phaser.Scene {
         
         const jumpPower = -300;
         const climbSpeed = -100;
-        const onGround = player.body.touching.down;
+        const onGround = player.body.blocked.down;
 
         const touchingVine = gameState.onVine;
         gameState.onVine = false; 
