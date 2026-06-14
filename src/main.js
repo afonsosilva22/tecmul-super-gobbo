@@ -89,17 +89,20 @@ class GameScene extends Phaser.Scene {
     }
 
     preload() {
-        this.load.spritesheet('idle', 'assets/Gobbo_Idle_4.png', { frameWidth: 32, frameHeight: 32 });
-        this.load.spritesheet('walk', 'assets/Gobbo_Walk_6.png', { frameWidth: 32, frameHeight: 32 });
-        this.load.spritesheet('sprint', 'assets/Gobbo_Run_6.png', { frameWidth: 32, frameHeight: 32 });
-        this.load.spritesheet('jump', 'assets/Gobbo_Jump_8.png', { frameWidth: 32, frameHeight: 32 });
+        this.load.spritesheet('idle', 'assets/GobboAnims/Gobbo_Idle_4.png', { frameWidth: 32, frameHeight: 32 });
+        this.load.spritesheet('walk', 'assets/GobboAnims/Gobbo_Walk_6.png', { frameWidth: 32, frameHeight: 32 });
+        this.load.spritesheet('sprint', 'assets/GobboAnims/Gobbo_Run_6.png', { frameWidth: 32, frameHeight: 32 });
+        this.load.spritesheet('jump', 'assets/GobboAnims/Gobbo_Jump_8.png', { frameWidth: 32, frameHeight: 32 });
         
         // Leitura estável a 42x42 píxeis das tuas spritesheets de ataque
-        this.load.spritesheet('attack1', 'assets/Gobbo_Attack1.png', { frameWidth: 42, frameHeight: 42 });
-        this.load.spritesheet('attack2', 'assets/Gobbo_Attack2.png', { frameWidth: 42, frameHeight: 42 });
+        this.load.spritesheet('attack1', 'assets/GobboAnims/Gobbo_Attack1.png', { frameWidth: 42, frameHeight: 42 });
+        this.load.spritesheet('attack2', 'assets/GobboAnims/Gobbo_Attack2.png', { frameWidth: 42, frameHeight: 42 });
 
-        this.load.spritesheet('enemy1_walk', 'assets/enemies/enemy1/enemy1_walk.png', { frameWidth: 128, frameHeight: 128 });
+        this.load.spritesheet('enemy1_walk',    'assets/enemies/enemy1/enemy1_walk.png',    { frameWidth: 128, frameHeight: 128 });
         this.load.spritesheet('enemy1_attack1', 'assets/enemies/enemy1/enemy1_attack1.png', { frameWidth: 128, frameHeight: 128 });
+        this.load.spritesheet('enemy1_idle',    'assets/enemies/enemy1/Idle.png',            { frameWidth: 128, frameHeight: 128 });
+        this.load.spritesheet('enemy1_hurt',    'assets/enemies/enemy1/Hurt.png',            { frameWidth: 128, frameHeight: 128 });
+        this.load.spritesheet('enemy1_dead',    'assets/enemies/enemy1/Dead.png',            { frameWidth: 128, frameHeight: 128 });
 
         this.load.tilemapTiledJSON('map', 'assets/TIlesetMaps/Map1/Mapa1.tmj');
         this.load.image('tiles_darkforest', 'assets/TIlesetMaps/tiles/Tilesheet - WOODS.png');
@@ -172,6 +175,27 @@ class GameScene extends Phaser.Scene {
             key: 'enemy1_attack1',
             frames: this.anims.generateFrameNumbers('enemy1_attack1', { start: 0, end: 5 }),
             frameRate: 10,
+            repeat: 0
+        });
+
+        this.anims.create({
+            key: 'enemy1_idle',
+            frames: this.anims.generateFrameNumbers('enemy1_idle', { start: 0, end: 4 }),
+            frameRate: 6,
+            repeat: -1
+        });
+
+        this.anims.create({
+            key: 'enemy1_hurt',
+            frames: this.anims.generateFrameNumbers('enemy1_hurt', { start: 0, end: 2 }),
+            frameRate: 12,
+            repeat: 0
+        });
+
+        this.anims.create({
+            key: 'enemy1_dead',
+            frames: this.anims.generateFrameNumbers('enemy1_dead', { start: 0, end: 1 }),
+            frameRate: 3,
             repeat: 0
         });
 
@@ -270,10 +294,12 @@ class GameScene extends Phaser.Scene {
             enemy.patrolEnd = patrolEnd;
             enemy.patrolSpeed = 80;
             enemy.patrolDirection = 1;
-            // Pontos de vida e cooldown de hit para não registar dano múltiplo por golpe
+            // Pontos de vida, cooldown de hit e estado da máquina de estados
             enemy.hp    = 3;
             enemy.maxHp = 3;
             enemy.hitCooldown = false;
+            // Estados possíveis: 'patrol' | 'attack' | 'hurt' | 'dead'
+            enemy.state = 'patrol';
             // Barra de vida flutuante
             enemy.hpBarBg   = this.add.rectangle(x, 0, 32, 4, 0x333333).setDepth(5);
             // origin(0, 0.5): o x do fill é sempre o bordo esquerdo — assim a barra encolhe pela direita
@@ -293,15 +319,35 @@ class GameScene extends Phaser.Scene {
         gameState.attackHitbox.body.enable = false;
 
         this.physics.add.overlap(gameState.attackHitbox, gameState.enemies, (hitbox, enemy) => {
-            // Cooldown evita que o mesmo golpe tire dano múltiplo em frames consecutivos
-            if (enemy.hitCooldown) return;
+            // Não faz nada se já está morto, em hurt ou dentro do cooldown de dano
+            if (enemy.hitCooldown || enemy.state === 'dead' || enemy.state === 'hurt') return;
             enemy.hp -= 1;
             enemy.hitCooldown = true;
-            this.time.delayedCall(400, () => { if (enemy.active) enemy.hitCooldown = false; });
+            this.time.delayedCall(500, () => { if (enemy.active) enemy.hitCooldown = false; });
+
             if (enemy.hp <= 0) {
-                enemy.hpBarBg.destroy();
-                enemy.hpBarFill.destroy();
-                enemy.destroy();
+                // Morte: limpa listeners pendentes, para e toca animação; destrói no final
+                enemy.state = 'dead';
+                enemy.off('animationcomplete-enemy1_attack1');
+                enemy.body.setVelocityX(0);
+                enemy.anims.play('enemy1_dead', true);
+                enemy.once('animationcomplete-enemy1_dead', () => {
+                    if (enemy.active) {
+                        enemy.hpBarBg.destroy();
+                        enemy.hpBarFill.destroy();
+                        enemy.destroy();
+                    }
+                });
+            } else {
+                // Hurt: knockback na direção oposta ao jogador + animação de dano
+                enemy.state = 'hurt';
+                enemy.off('animationcomplete-enemy1_attack1');
+                const knockDir = gameState.player.x < enemy.x ? 1 : -1;
+                enemy.body.setVelocityX(180 * knockDir);
+                enemy.anims.play('enemy1_hurt', true);
+                enemy.once('animationcomplete-enemy1_hurt', () => {
+                    if (enemy.active && enemy.state === 'hurt') enemy.state = 'patrol';
+                });
             }
         });
 
@@ -437,19 +483,64 @@ class GameScene extends Phaser.Scene {
         }
 
         gameState.enemies.getChildren().forEach(enemy => {
-            // Colisão lateral tem prioridade: parede ou rampa invertem a direção,
-            // sem esperar pelos limites de patrulha (evita ficar preso contra tiles sólidos).
-            if (enemy.body.blocked.right && enemy.patrolDirection === 1) {
-                enemy.patrolDirection = -1;
-            } else if (enemy.body.blocked.left && enemy.patrolDirection === -1) {
-                enemy.patrolDirection = 1;
-            } else if (enemy.x >= enemy.patrolEnd) {
-                enemy.patrolDirection = -1;
-            } else if (enemy.x <= enemy.patrolStart) {
-                enemy.patrolDirection = 1;
+            // Morto: aguarda o callback da animação de morte
+            if (enemy.state === 'dead') return;
+
+            // Ferido: knockback resolve o movimento, não intervimos; só atualiza a HP bar
+            if (enemy.state === 'hurt') {
+                const barY = enemy.y - 30;
+                enemy.hpBarBg.setPosition(enemy.x, barY);
+                enemy.hpBarFill.setPosition(enemy.x - 16, barY);
+                return;
             }
-            enemy.body.setVelocityX(enemy.patrolSpeed * enemy.patrolDirection);
-            enemy.setFlipX(enemy.patrolDirection === -1);
+
+            const dx = Math.abs(gameState.player.x - enemy.x);
+            const dy = Math.abs(gameState.player.y - enemy.y);
+
+            if (dx < 55 && dy < 36) {
+                // Alcance de ataque: para, vira-se para o jogador, dispara a anim de ataque
+                enemy.body.setVelocityX(0);
+                enemy.setFlipX(gameState.player.x < enemy.x);
+                if (enemy.state !== 'attack') {
+                    enemy.state = 'attack';
+                    enemy.anims.play('enemy1_attack1', true);
+                    // Regressa a patrulha quando o ataque termina — once() garante disparo único
+                    enemy.once('animationcomplete-enemy1_attack1', () => {
+                        if (enemy.active && enemy.state === 'attack') enemy.state = 'patrol';
+                    });
+                }
+            } else if (dx < 150 && dy < 60) {
+                // Alcance de deteção: para, olha para o jogador e fica em idle (alerta)
+                if (enemy.state === 'attack') {
+                    enemy.state = 'patrol';
+                    // Limpa listener pendente para evitar disparos duplicados
+                    enemy.off('animationcomplete-enemy1_attack1');
+                }
+                enemy.body.setVelocityX(0);
+                enemy.setFlipX(gameState.player.x < enemy.x);
+                enemy.anims.play('enemy1_idle', true);
+            } else {
+                // Fora do alcance: patrulha normal
+                if (enemy.state === 'attack') {
+                    enemy.state = 'patrol';
+                    enemy.off('animationcomplete-enemy1_attack1');
+                }
+                // Colisão lateral tem prioridade: parede ou rampa invertem a direção imediatamente,
+                // sem esperar pelos limites de patrulha (evita ficar preso contra tiles sólidos).
+                if (enemy.body.blocked.right && enemy.patrolDirection === 1) {
+                    enemy.patrolDirection = -1;
+                } else if (enemy.body.blocked.left && enemy.patrolDirection === -1) {
+                    enemy.patrolDirection = 1;
+                } else if (enemy.x >= enemy.patrolEnd) {
+                    enemy.patrolDirection = -1;
+                } else if (enemy.x <= enemy.patrolStart) {
+                    enemy.patrolDirection = 1;
+                }
+                enemy.body.setVelocityX(enemy.patrolSpeed * enemy.patrolDirection);
+                enemy.setFlipX(enemy.patrolDirection === -1);
+                enemy.anims.play('enemy1_walk', true);
+            }
+
             // Atualiza a barra de HP flutuante acima do inimigo a cada frame
             const barY = enemy.y - 30;
             enemy.hpBarBg.setPosition(enemy.x, barY);
