@@ -107,6 +107,10 @@ class GameScene extends Phaser.Scene {
         this.load.image('bg_bush',    'assets/TIlesetMaps/tiles/BUSH - BACKGROUND.png');
         this.load.image('bg_forest',  'assets/TIlesetMaps/tiles/WOODS - Second.png');
         this.load.image('bg_forest2', 'assets/TIlesetMaps/tiles/WOODS - Third.png');
+
+        this.load.image('vine',     'assets/TIlesetMaps/tiles/vine.png');
+        this.load.spritesheet('vine_tip', 'assets/TIlesetMaps/tiles/vine_tip.png', { frameWidth: 32, frameHeight: 32 });
+        this.load.spritesheet('vine2',    'assets/TIlesetMaps/tiles/vine2.png',    { frameWidth: 32, frameHeight: 32 });
     }
 
     create() {
@@ -195,14 +199,35 @@ class GameScene extends Phaser.Scene {
         // VINES
         // ====================
         gameState.vines = this.physics.add.staticGroup();
-        for (let i = 0; i < 5; i++) {
-            const vineX = Phaser.Math.Between(500, 2500);
-            const vineY = 200; 
-            const vineWidth = 50;
-            const vineHeight = 240;
-            const vine = this.add.rectangle(vineX, vineY, vineWidth, vineHeight, 0x1a4314);
-            gameState.vines.add(vine);
-        }
+
+        const vineObjectLayer = map.getObjectLayer('VinhasCamada');
+        vineObjectLayer.objects.forEach(obj => {
+            const tileId = obj.gid ? (obj.gid & 0x0FFFFFFF) : null;
+
+            if (!tileId) {
+                // Retângulo invisível — zona de escalada com física
+                const zone = this.add.rectangle(
+                    obj.x + obj.width / 2,
+                    obj.y + obj.height / 2,
+                    obj.width,
+                    obj.height
+                );
+                gameState.vines.add(zone);
+            } else {
+                // Tile sprite — visual colocado pelo Tiled
+                // Em Tiled, tile objects têm y na base do sprite (não no topo)
+                const sx = obj.x + obj.width / 2;
+                const sy = obj.y - obj.height / 2;
+
+                if (tileId === 1009) {
+                    this.add.image(sx, sy, 'vine');
+                } else if (tileId >= 1010 && tileId <= 1013) {
+                    this.add.image(sx, sy, 'vine_tip', tileId - 1010);
+                } else if (tileId >= 1014 && tileId <= 1017) {
+                    this.add.image(sx, sy, 'vine2', tileId - 1014);
+                }
+            }
+        });
 
         // ====================
         // PLAYER
