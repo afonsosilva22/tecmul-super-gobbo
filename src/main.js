@@ -1,5 +1,22 @@
 const gameState = {}
 
+gameState.language = 'en';
+
+const formatTimer = (milliseconds, roundUp = false) => {
+    const totalSeconds = Math.max(0, roundUp ? Math.ceil(milliseconds / 1000) : Math.floor(milliseconds / 1000));
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
+
+const getStrings = (scene) => {
+    const strings = scene.cache.json.get('strings');
+    return strings?.[gameState.language] ?? strings?.en ?? {};
+}
+
+const getText = (scene, key) => getStrings(scene)[key] ?? key;
+
 // ============================================================================
 // CLASSE PARA O MENU PRINCIPAL DO JOGO
 // ============================================================================
@@ -8,12 +25,18 @@ class MainMenu extends Phaser.Scene {
         super({ key: 'MainMenu' }); // Define a chave identificadora desta cena
     }
 
+    preload() {
+        this.load.json('strings', 'assets/strings.json');
+    }
+
     create() {
+        const text = (key) => getText(this, key);
+
         // Altera a cor de fundo apenas para o ecrã do menu
         this.cameras.main.setBackgroundColor('#1a1a1a'); 
 
         // Adiciona o título do jogo centralizado com um estilo mais polido
-        this.add.text(320, 80, 'SUPER GOBBO', { 
+        this.add.text(320, 80, text('title'), { 
             fontSize: '42px', 
             fill: '#ffffff',
             fontStyle: 'bold',
@@ -73,10 +96,315 @@ class MainMenu extends Phaser.Scene {
                 });
         };
 
-        createMenuButton(320, 160, 'Play', 0x27ae60, 0x2ecc71, () => this.scene.start('GameScene'));
-        createMenuButton(320, 215, 'Options', null, null, null, true);
-        createMenuButton(320, 270, 'How to Play', null, null, null, true);
-        createMenuButton(320, 325, 'Quit', 0xc0392b, 0xe74c3c, () => alert('Obrigado por jogares!'));
+        createMenuButton(320, 160, text('play'), 0x27ae60, 0x2ecc71, () => this.scene.start('GameScene'));
+        createMenuButton(320, 215, text('options'), 0x2980b9, 0x3498db, () => this.scene.start('OptionsScene', { returnScene: 'MainMenu' }));
+        createMenuButton(320, 270, text('howToPlay'), null, null, null, true);
+        createMenuButton(320, 325, text('quit'), 0xc0392b, 0xe74c3c, () => alert(text('quitMessage')));
+    }
+}
+
+// ============================================================================
+// CLASSE PARA O ECRÃƒ DE GAME OVER
+// ============================================================================
+// ============================================================================
+// CLASSE PARA AS OPCOES
+// ============================================================================
+class OptionsScene extends Phaser.Scene {
+    constructor() {
+        super({ key: 'OptionsScene' });
+    }
+
+    create(data) {
+        const text = (key) => getText(this, key);
+        const returnScene = data?.returnScene ?? 'MainMenu';
+
+        this.scene.bringToTop();
+        this.cameras.main.setBackgroundColor('#1a1a1a');
+
+        this.add.text(320, 65, text('options'), {
+            fontSize: '42px',
+            fill: '#ffffff',
+            fontStyle: 'bold',
+            fontFamily: 'monospace',
+            shadow: { offsetX: 3, offsetY: 3, color: '#000000', blur: 2, fill: true }
+        }).setOrigin(0.5);
+
+        this.add.text(320, 115, text('language'), {
+            fontSize: '22px',
+            fill: '#ffffff',
+            fontFamily: 'monospace',
+            fontStyle: 'bold'
+        }).setOrigin(0.5);
+
+        const createMenuButton = (x, y, buttonText, baseColor, hoverColor, onClickAction) => {
+            const btnWidth = 200;
+            const btnHeight = 38;
+
+            const btnGraphics = this.add.graphics();
+            btnGraphics.fillStyle(baseColor, 1);
+            btnGraphics.fillRoundedRect(x - btnWidth / 2, y - btnHeight / 2, btnWidth, btnHeight, 8);
+
+            const btnText = this.add.text(x, y, buttonText, {
+                fontSize: '16px',
+                fill: '#ffffff',
+                fontFamily: 'monospace',
+                fontStyle: 'bold'
+            }).setOrigin(0.5);
+
+            btnGraphics.setDepth(0);
+            btnText.setDepth(1);
+
+            this.add.zone(x, y, btnWidth, btnHeight)
+                .setOrigin(0.5)
+                .setInteractive({ useHandCursor: true })
+                .on('pointerdown', onClickAction)
+                .on('pointerover', () => {
+                    btnGraphics.clear();
+                    btnGraphics.fillStyle(hoverColor, 1);
+                    btnGraphics.fillRoundedRect(x - btnWidth / 2, y - btnHeight / 2, btnWidth, btnHeight, 8);
+                    btnText.setStyle({ fill: '#000000' });
+                })
+                .on('pointerout', () => {
+                    btnGraphics.clear();
+                    btnGraphics.fillStyle(baseColor, 1);
+                    btnGraphics.fillRoundedRect(x - btnWidth / 2, y - btnHeight / 2, btnWidth, btnHeight, 8);
+                    btnText.setStyle({ fill: '#ffffff' });
+                });
+        };
+
+        const createLanguageButton = (y, language, labelKey) => {
+            const isSelected = gameState.language === language;
+            const baseColor = isSelected ? 0x27ae60 : 0x2980b9;
+            const hoverColor = isSelected ? 0x2ecc71 : 0x3498db;
+
+            createMenuButton(320, y, text(labelKey), baseColor, hoverColor, () => {
+                gameState.language = language;
+                this.scene.restart({ returnScene });
+            });
+        };
+
+        createLanguageButton(155, 'en', 'english');
+        createLanguageButton(198, 'pt', 'portuguese');
+        createLanguageButton(241, 'es', 'spanish');
+        createLanguageButton(284, 'fr', 'french');
+        createMenuButton(320, 327, text('back'), 0xc0392b, 0xe74c3c, () => this.scene.start(returnScene));
+    }
+}
+
+class GameOverScene extends Phaser.Scene {
+    constructor() {
+        super({ key: 'GameOverScene' });
+    }
+
+    create() {
+        const text = (key) => getText(this, key);
+
+        this.scene.bringToTop();
+        this.cameras.main.setBackgroundColor('#1a1a1a');
+
+        this.add.text(320, 80, text('gameOver'), {
+            fontSize: '42px',
+            fill: '#ffffff',
+            fontStyle: 'bold',
+            fontFamily: 'monospace',
+            shadow: { offsetX: 3, offsetY: 3, color: '#000000', blur: 2, fill: true }
+        }).setOrigin(0.5);
+
+        const createMenuButton = (x, y, text, baseColor, hoverColor, onClickAction) => {
+            const btnWidth = 200;
+            const btnHeight = 45;
+
+            const btnGraphics = this.add.graphics();
+            btnGraphics.fillStyle(baseColor, 1);
+            btnGraphics.fillRoundedRect(x - btnWidth / 2, y - btnHeight / 2, btnWidth, btnHeight, 8);
+
+            const btnText = this.add.text(x, y, text, {
+                fontSize: '18px',
+                fill: '#ffffff',
+                fontFamily: 'monospace',
+                fontStyle: 'bold'
+            }).setOrigin(0.5);
+
+            btnGraphics.setDepth(0);
+            btnText.setDepth(1);
+
+            this.add.zone(x, y, btnWidth, btnHeight)
+                .setOrigin(0.5)
+                .setInteractive({ useHandCursor: true })
+                .on('pointerdown', onClickAction)
+                .on('pointerover', () => {
+                    btnGraphics.clear();
+                    btnGraphics.fillStyle(hoverColor, 1);
+                    btnGraphics.fillRoundedRect(x - btnWidth / 2, y - btnHeight / 2, btnWidth, btnHeight, 8);
+                    btnText.setStyle({ fill: '#000000' });
+                })
+                .on('pointerout', () => {
+                    btnGraphics.clear();
+                    btnGraphics.fillStyle(baseColor, 1);
+                    btnGraphics.fillRoundedRect(x - btnWidth / 2, y - btnHeight / 2, btnWidth, btnHeight, 8);
+                    btnText.setStyle({ fill: '#ffffff' });
+                });
+        };
+
+        createMenuButton(320, 175, text('restart'), 0x27ae60, 0x2ecc71, () => this.scene.start('GameScene'));
+        createMenuButton(320, 235, text('mainMenu'), 0xc0392b, 0xe74c3c, () => this.scene.start('MainMenu'));
+    }
+}
+
+// ============================================================================
+// CLASSE PARA O ECRÃƒ DE VITÃ“RIA / SCORE
+// ============================================================================
+class ScoreScene extends Phaser.Scene {
+    constructor() {
+        super({ key: 'ScoreScene' });
+    }
+
+    create(data) {
+        const text = (key) => getText(this, key);
+
+        this.cameras.main.setBackgroundColor('#1a1a1a');
+
+        this.add.text(320, 80, text('win'), {
+            fontSize: '42px',
+            fill: '#ffffff',
+            fontStyle: 'bold',
+            fontFamily: 'monospace',
+            shadow: { offsetX: 3, offsetY: 3, color: '#000000', blur: 2, fill: true }
+        }).setOrigin(0.5);
+
+        this.add.text(320, 130, `${text('yourTime')} ${data?.finishTime ?? '0:00'}`, {
+            fontSize: '22px',
+            fill: '#ffffff',
+            fontFamily: 'monospace',
+            fontStyle: 'bold'
+        }).setOrigin(0.5);
+
+        const createMenuButton = (x, y, text, baseColor, hoverColor, onClickAction) => {
+            const btnWidth = 200;
+            const btnHeight = 45;
+
+            const btnGraphics = this.add.graphics();
+            btnGraphics.fillStyle(baseColor, 1);
+            btnGraphics.fillRoundedRect(x - btnWidth / 2, y - btnHeight / 2, btnWidth, btnHeight, 8);
+
+            const btnText = this.add.text(x, y, text, {
+                fontSize: '18px',
+                fill: '#ffffff',
+                fontFamily: 'monospace',
+                fontStyle: 'bold'
+            }).setOrigin(0.5);
+
+            btnGraphics.setDepth(0);
+            btnText.setDepth(1);
+
+            this.add.zone(x, y, btnWidth, btnHeight)
+                .setOrigin(0.5)
+                .setInteractive({ useHandCursor: true })
+                .on('pointerdown', onClickAction)
+                .on('pointerover', () => {
+                    btnGraphics.clear();
+                    btnGraphics.fillStyle(hoverColor, 1);
+                    btnGraphics.fillRoundedRect(x - btnWidth / 2, y - btnHeight / 2, btnWidth, btnHeight, 8);
+                    btnText.setStyle({ fill: '#000000' });
+                })
+                .on('pointerout', () => {
+                    btnGraphics.clear();
+                    btnGraphics.fillStyle(baseColor, 1);
+                    btnGraphics.fillRoundedRect(x - btnWidth / 2, y - btnHeight / 2, btnWidth, btnHeight, 8);
+                    btnText.setStyle({ fill: '#ffffff' });
+                });
+        };
+
+        createMenuButton(320, 175, text('restart'), 0x27ae60, 0x2ecc71, () => this.scene.start('GameScene'));
+        createMenuButton(320, 235, text('mainMenu'), 0xc0392b, 0xe74c3c, () => this.scene.start('MainMenu'));
+    }
+}
+
+// ============================================================================
+// CLASSE PARA O MENU DE PAUSA
+// ============================================================================
+class PauseScene extends Phaser.Scene {
+    constructor() {
+        super({ key: 'PauseScene' });
+    }
+
+    create() {
+        const text = (key) => getText(this, key);
+
+        this.scene.bringToTop();
+        this.cameras.main.setBackgroundColor('#1a1a1a');
+
+        this.add.text(320, 80, text('paused'), {
+            fontSize: '42px',
+            fill: '#ffffff',
+            fontStyle: 'bold',
+            fontFamily: 'monospace',
+            shadow: { offsetX: 3, offsetY: 3, color: '#000000', blur: 2, fill: true }
+        }).setOrigin(0.5);
+
+        const createMenuButton = (x, y, text, baseColor, hoverColor, onClickAction, isPlaceholder = false) => {
+            const btnWidth = 200;
+            const btnHeight = 45;
+
+            const btnGraphics = this.add.graphics();
+
+            if (isPlaceholder) {
+                btnGraphics.fillStyle(0x333333, 1);
+                btnGraphics.fillRoundedRect(x - btnWidth / 2, y - btnHeight / 2, btnWidth, btnHeight, 8);
+
+                this.add.text(x, y, text, {
+                    fontSize: '18px',
+                    fill: '#777777',
+                    fontFamily: 'monospace',
+                    fontStyle: 'bold'
+                }).setOrigin(0.5);
+
+                return;
+            }
+
+            btnGraphics.fillStyle(baseColor, 1);
+            btnGraphics.fillRoundedRect(x - btnWidth / 2, y - btnHeight / 2, btnWidth, btnHeight, 8);
+
+            const btnText = this.add.text(x, y, text, {
+                fontSize: '18px',
+                fill: '#ffffff',
+                fontFamily: 'monospace',
+                fontStyle: 'bold'
+            }).setOrigin(0.5);
+
+            btnGraphics.setDepth(0);
+            btnText.setDepth(1);
+
+            this.add.zone(x, y, btnWidth, btnHeight)
+                .setOrigin(0.5)
+                .setInteractive({ useHandCursor: true })
+                .on('pointerdown', onClickAction)
+                .on('pointerover', () => {
+                    btnGraphics.clear();
+                    btnGraphics.fillStyle(hoverColor, 1);
+                    btnGraphics.fillRoundedRect(x - btnWidth / 2, y - btnHeight / 2, btnWidth, btnHeight, 8);
+                    btnText.setStyle({ fill: '#000000' });
+                })
+                .on('pointerout', () => {
+                    btnGraphics.clear();
+                    btnGraphics.fillStyle(baseColor, 1);
+                    btnGraphics.fillRoundedRect(x - btnWidth / 2, y - btnHeight / 2, btnWidth, btnHeight, 8);
+                    btnText.setStyle({ fill: '#ffffff' });
+                });
+        };
+
+        createMenuButton(320, 145, text('continue'), 0x27ae60, 0x2ecc71, () => {
+            gameState.isPaused = false;
+            this.scene.resume('GameScene');
+            this.scene.stop();
+        });
+        createMenuButton(320, 200, text('options'), 0x2980b9, 0x3498db, () => this.scene.start('OptionsScene', { returnScene: 'PauseScene' }));
+        createMenuButton(320, 255, text('howToPlay'), null, null, null, true);
+        createMenuButton(320, 310, text('quit'), 0xc0392b, 0xe74c3c, () => {
+            gameState.isPaused = false;
+            this.scene.stop('GameScene');
+            this.scene.start('MainMenu');
+        });
     }
 }
 
@@ -114,6 +442,8 @@ class GameScene extends Phaser.Scene {
     }
 
     create() {
+        const text = (key) => getText(this, key);
+
         this.cameras.main.setBackgroundColor('#b9eaff');
 
         // ====================
@@ -323,7 +653,7 @@ class GameScene extends Phaser.Scene {
                 }
             });
             if (gameState.playerHP <= 0) {
-                this.scene.restart();
+                this.scene.start('GameOverScene');
             }
         });
 
@@ -335,7 +665,7 @@ class GameScene extends Phaser.Scene {
         gameState.playerInvincible = false;
 
         // "HP" label fixo à câmara 
-        this.add.text(10, 10, 'HP', { fontSize: '9px', fill: '#ffffff', fontFamily: 'monospace' })
+        gameState.hpLabel = this.add.text(10, 10, text('hp'), { fontSize: '9px', fill: '#ffffff', fontFamily: 'monospace' })
             .setScrollFactor(0).setDepth(20);
         // Fundo cinzento da barra (ligeiramente maior para dar borda)
         this.add.rectangle(75, 16, 84, 10, 0x333333)
@@ -344,12 +674,87 @@ class GameScene extends Phaser.Scene {
         gameState.hpBarFill = this.add.rectangle(35, 16, 80, 8, 0x2ecc71)
             .setOrigin(0, 0.5).setScrollFactor(0).setDepth(21);
 
+        gameState.timerDuration = 120000;
+        gameState.remainingTime = gameState.timerDuration;
+        gameState.elapsedTime = 0;
+        gameState.timerText = this.add.text(320, 10, '2:00', {
+            fontSize: '18px',
+            fill: '#ffffff',
+            fontFamily: 'monospace',
+            fontStyle: 'bold',
+            shadow: { offsetX: 2, offsetY: 2, color: '#000000', blur: 1, fill: true }
+        }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(20);
+
+        gameState.isPaused = false;
+        const pauseButtonWidth = 82;
+        const pauseButtonHeight = 28;
+        const pauseButtonX = 590;
+        const pauseButtonY = 20;
+        const pauseButtonGraphics = this.add.graphics().setScrollFactor(0).setDepth(20);
+        pauseButtonGraphics.fillStyle(0x333333, 1);
+        pauseButtonGraphics.fillRoundedRect(
+            pauseButtonX - pauseButtonWidth / 2,
+            pauseButtonY - pauseButtonHeight / 2,
+            pauseButtonWidth,
+            pauseButtonHeight,
+            8
+        );
+
+        const pauseButtonText = this.add.text(pauseButtonX, pauseButtonY, text('pause'), {
+            fontSize: '14px',
+            fill: '#ffffff',
+            fontFamily: 'monospace',
+            fontStyle: 'bold'
+        }).setOrigin(0.5).setScrollFactor(0).setDepth(21);
+
+        this.add.zone(pauseButtonX, pauseButtonY, pauseButtonWidth, pauseButtonHeight)
+            .setOrigin(0.5)
+            .setScrollFactor(0)
+            .setDepth(22)
+            .setInteractive({ useHandCursor: true })
+            .on('pointerdown', () => {
+                gameState.isPaused = true;
+                this.scene.launch('PauseScene');
+                this.scene.pause();
+            })
+            .on('pointerover', () => {
+                pauseButtonGraphics.clear();
+                pauseButtonGraphics.fillStyle(0x777777, 1);
+                pauseButtonGraphics.fillRoundedRect(
+                    pauseButtonX - pauseButtonWidth / 2,
+                    pauseButtonY - pauseButtonHeight / 2,
+                    pauseButtonWidth,
+                    pauseButtonHeight,
+                    8
+                );
+                pauseButtonText.setStyle({ fill: '#000000' });
+            })
+            .on('pointerout', () => {
+                pauseButtonGraphics.clear();
+                pauseButtonGraphics.fillStyle(0x333333, 1);
+                pauseButtonGraphics.fillRoundedRect(
+                    pauseButtonX - pauseButtonWidth / 2,
+                    pauseButtonY - pauseButtonHeight / 2,
+                    pauseButtonWidth,
+                    pauseButtonHeight,
+                    8
+                );
+                pauseButtonText.setStyle({ fill: '#ffffff' });
+            });
+
+        this.events.on('resume', () => {
+            gameState.hpLabel.setText(text('hp'));
+            pauseButtonText.setText(text('pause'));
+        });
+
         // ====================
         // CAMERA AND BOUNDARIES
         // ====================
         this.physics.world.setBounds(0, 0, 3520, 640);
         this.cameras.main.setBounds(0, 0, 3520, 640);
         this.cameras.main.startFollow(gameState.player, true, 0.05, 0.05);
+        gameState.mapRightEdge = 3520;
+        gameState.hasWon = false;
 
         // ====================
         // INPUT (TECLADO E RATO)
@@ -363,6 +768,14 @@ class GameScene extends Phaser.Scene {
 
         // Congela a posição contra o chão usando immovable
         this.input.on('pointerdown', (pointer) => {
+            if (gameState.isPaused) return;
+            if (
+                pointer.x >= pauseButtonX - pauseButtonWidth / 2 &&
+                pointer.x <= pauseButtonX + pauseButtonWidth / 2 &&
+                pointer.y >= pauseButtonY - pauseButtonHeight / 2 &&
+                pointer.y <= pauseButtonY + pauseButtonHeight / 2
+            ) return;
+
             if (!gameState.isAttacking) {
                 const onGround = gameState.player.body.blocked.down;
 
@@ -409,8 +822,23 @@ class GameScene extends Phaser.Scene {
         });
     }
 
-    update() {
+    update(time, delta) {
         const player = gameState.player;
+
+        gameState.remainingTime = Math.max(0, gameState.remainingTime - delta);
+        gameState.elapsedTime = gameState.timerDuration - gameState.remainingTime;
+        gameState.timerText.setText(formatTimer(gameState.remainingTime, true));
+
+        if (gameState.remainingTime <= 0) {
+            this.scene.start('GameOverScene');
+            return;
+        }
+
+        if (!gameState.hasWon && player.body.right >= gameState.mapRightEdge - 1) {
+            gameState.hasWon = true;
+            this.scene.start('ScoreScene', { finishTime: formatTimer(gameState.elapsedTime) });
+            return;
+        }
 
         const walkSpeed = 170;
         const sprintSpeed = 260;
@@ -547,7 +975,7 @@ const config = {
             debug: true, 
         }
     },
-    scene: [MainMenu, GameScene] 
+    scene: [MainMenu, OptionsScene, GameScene, GameOverScene, ScoreScene, PauseScene] 
 }
 
 const game = new Phaser.Game(config)
