@@ -6,12 +6,11 @@
 
 ## Grupo: 
 Afonso Silva, nº 33276
+
 Guilherme Maciel, nº 33245
 
 ## Versão do Phaser: 
-3.90
-
-Esta versão do Phaser foi incluída diretamente no projeto, no ficheiro index.html, com a linha:
+3.90, esta versão do Phaser foi incluída diretamente no projeto, no ficheiro index.html, com a linha:
 
 ```<script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>```
 

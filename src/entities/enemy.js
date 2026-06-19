@@ -1,16 +1,16 @@
 import { gameState } from '../state.js';
 
 const enemySpawns = [
-    { x: 280,  patrolStart: 160,  patrolEnd: 560  },  
-    { x: 650,  patrolStart: 480,  patrolEnd: 780  },  
-    { x: 1100, patrolStart: 960,  patrolEnd: 1350 },
+    { x: 1376,  patrolStart: 1344,  patrolEnd: 1568, y: 160  },  
+    { x: 2368,  patrolStart: 2304,  patrolEnd: 2432, y: 192  },  
+    { x: 1100, patrolStart: 960,  patrolEnd: 1350},
     { x: 1700, patrolStart: 1520, patrolEnd: 1900 },
-    { x: 2250, patrolStart: 2060, patrolEnd: 2430 },  
+    { x: 2208, patrolStart: 2080, patrolEnd: 2368, y:384 },  
     { x: 3250, patrolStart: 3080, patrolEnd: 3480 },
 ];
 
-const spawnEnemy = (scene, platformLayer, x, patrolStart, patrolEnd) => {
-    const enemy = scene.physics.add.sprite(x, 250, 'enemy1_walk');
+const spawnEnemy = (scene, platformLayer, x, patrolStart, patrolEnd, y = 250) => {
+    const enemy = scene.physics.add.sprite(x, y, 'enemy1_walk');
     enemy.setScale(0.5);
     
     
@@ -37,8 +37,8 @@ const spawnEnemy = (scene, platformLayer, x, patrolStart, patrolEnd) => {
 export const createEnemies = (scene, platformLayer, playerController) => {
     gameState.enemies = scene.physics.add.group();
 
-    enemySpawns.forEach(({ x, patrolStart, patrolEnd }) => {
-        spawnEnemy(scene, platformLayer, x, patrolStart, patrolEnd);
+    enemySpawns.forEach(({ x, patrolStart, patrolEnd, y }) => {
+        spawnEnemy(scene, platformLayer, x, patrolStart, patrolEnd, y);
     });
 
     scene.physics.add.overlap(gameState.attackHitbox, gameState.enemies, (hitbox, enemy) => {
