@@ -2,6 +2,7 @@ import { createEnemies, updateEnemies } from '../entities/enemy.js';
 import { createPlayer } from '../entities/player.js';
 import { gameState } from '../state.js';
 import { createGameAnimations } from '../utils/animations.js';
+import { assetPath } from '../utils/assets.js';
 import { loadGameAudio, playBackgroundMusic, stopMovementSounds } from '../utils/audio.js';
 import { getText } from '../utils/text.js';
 import { formatTimer } from '../utils/time.js';
@@ -17,25 +18,25 @@ export class GameScene extends Phaser.Scene {
     preload() {
         loadGameAudio(this);
 
-        this.load.spritesheet('idle', 'assets/spritesheets/gobbo/Gobbo_Idle_4.png', { frameWidth: 32, frameHeight: 32 });
-        this.load.spritesheet('walk', 'assets/spritesheets/gobbo/Gobbo_Walk_6.png', { frameWidth: 32, frameHeight: 32 });
-        this.load.spritesheet('sprint', 'assets/spritesheets/gobbo/Gobbo_Run_6.png', { frameWidth: 32, frameHeight: 32 });
-        this.load.spritesheet('jump', 'assets/spritesheets/gobbo/Gobbo_Jump_8.png', { frameWidth: 32, frameHeight: 32 });
-        this.load.spritesheet('climb', 'assets/spritesheets/gobbo/Gobbo_Climb_4.png', { frameWidth: 32, frameHeight: 32 });
-        this.load.spritesheet('attack1', 'assets/spritesheets/gobbo/Gobbo_Attack1.png', { frameWidth: 42, frameHeight: 42 });
-        this.load.spritesheet('attack2', 'assets/spritesheets/gobbo/Gobbo_Attack2.png', { frameWidth: 42, frameHeight: 42 });
-        this.load.spritesheet('enemy1_walk', 'assets/spritesheets/enemy/enemy1_walk.png', { frameWidth: 128, frameHeight: 128 });
-        this.load.spritesheet('enemy1_attack1', 'assets/spritesheets/enemy/enemy1_attack1.png', { frameWidth: 128, frameHeight: 128 });
+        this.load.spritesheet('idle', assetPath('assets/spritesheets/gobbo/Gobbo_Idle_4.png'), { frameWidth: 32, frameHeight: 32 });
+        this.load.spritesheet('walk', assetPath('assets/spritesheets/gobbo/Gobbo_Walk_6.png'), { frameWidth: 32, frameHeight: 32 });
+        this.load.spritesheet('sprint', assetPath('assets/spritesheets/gobbo/Gobbo_Run_6.png'), { frameWidth: 32, frameHeight: 32 });
+        this.load.spritesheet('jump', assetPath('assets/spritesheets/gobbo/Gobbo_Jump_8.png'), { frameWidth: 32, frameHeight: 32 });
+        this.load.spritesheet('climb', assetPath('assets/spritesheets/gobbo/Gobbo_Climb_4.png'), { frameWidth: 32, frameHeight: 32 });
+        this.load.spritesheet('attack1', assetPath('assets/spritesheets/gobbo/Gobbo_Attack1.png'), { frameWidth: 42, frameHeight: 42 });
+        this.load.spritesheet('attack2', assetPath('assets/spritesheets/gobbo/Gobbo_Attack2.png'), { frameWidth: 42, frameHeight: 42 });
+        this.load.spritesheet('enemy1_walk', assetPath('assets/spritesheets/enemy/enemy1_walk.png'), { frameWidth: 128, frameHeight: 128 });
+        this.load.spritesheet('enemy1_attack1', assetPath('assets/spritesheets/enemy/enemy1_attack1.png'), { frameWidth: 128, frameHeight: 128 });
 
-        this.load.tilemapTiledJSON('map', 'assets/TIlesetMaps/Map1/Mapa1.tmj');
-        this.load.image('tiles_darkforest', 'assets/TIlesetMaps/tiles/Tilesheet - WOODS.png');
-        this.load.image('bg_deco', 'assets/TIlesetMaps/tiles/BACKGROUND.png');
-        this.load.image('bg_bush', 'assets/TIlesetMaps/tiles/BUSH - BACKGROUND.png');
-        this.load.image('bg_forest', 'assets/TIlesetMaps/tiles/WOODS - Second.png');
-        this.load.image('bg_forest2', 'assets/TIlesetMaps/tiles/WOODS - Third.png');
-        this.load.image('vine', 'assets/TIlesetMaps/tiles/vine.png');
-        this.load.spritesheet('vine_tip', 'assets/TIlesetMaps/tiles/vine_tip.png', { frameWidth: 32, frameHeight: 32 });
-        this.load.spritesheet('vine2', 'assets/TIlesetMaps/tiles/vine2.png', { frameWidth: 32, frameHeight: 32 });
+        this.load.tilemapTiledJSON('map', assetPath('assets/TIlesetMaps/Map1/Mapa1.tmj'));
+        this.load.image('tiles_darkforest', assetPath('assets/TIlesetMaps/tiles/Tilesheet - WOODS.png'));
+        this.load.image('bg_deco', assetPath('assets/TIlesetMaps/tiles/BACKGROUND.png'));
+        this.load.image('bg_bush', assetPath('assets/TIlesetMaps/tiles/BUSH - BACKGROUND.png'));
+        this.load.image('bg_forest', assetPath('assets/TIlesetMaps/tiles/WOODS - Second.png'));
+        this.load.image('bg_forest2', assetPath('assets/TIlesetMaps/tiles/WOODS - Third.png'));
+        this.load.image('vine', assetPath('assets/TIlesetMaps/tiles/vine.png'));
+        this.load.spritesheet('vine_tip', assetPath('assets/TIlesetMaps/tiles/vine_tip.png'), { frameWidth: 32, frameHeight: 32 });
+        this.load.spritesheet('vine2', assetPath('assets/TIlesetMaps/tiles/vine2.png'), { frameWidth: 32, frameHeight: 32 });
     }
 
     create() {

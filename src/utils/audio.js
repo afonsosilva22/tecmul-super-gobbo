@@ -1,11 +1,12 @@
 import { gameState } from '../state.js';
+import { assetPath } from './assets.js';
 
 export const loadGameAudio = (scene) => {
-    scene.load.audio('background', 'assets/audio/background.mp3');
-    scene.load.audio('walkSound', 'assets/audio/walkSound.wav');
-    scene.load.audio('sprintSound', 'assets/audio/runSound.flac');
-    scene.load.audio('jumpFX', 'assets/audio/jumpFX.wav');
-    scene.load.audio('swordFX', 'assets/audio/swordFX.wav');
+    scene.load.audio('background', assetPath('assets/audio/background.mp3'));
+    scene.load.audio('walkSound', assetPath('assets/audio/walkSound.wav'));
+    scene.load.audio('sprintSound', assetPath('assets/audio/runSound.flac'));
+    scene.load.audio('jumpFX', assetPath('assets/audio/jumpFX.wav'));
+    scene.load.audio('swordFX', assetPath('assets/audio/swordFX.wav'));
 }
 
 export const playBackgroundMusic = (scene) => {

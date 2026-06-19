@@ -1,4 +1,5 @@
 import { getText } from '../utils/text.js';
+import { assetPath } from '../utils/assets.js';
 import { loadGameAudio, playBackgroundMusic } from '../utils/audio.js';
 
 export class MainMenu extends Phaser.Scene {
@@ -7,7 +8,7 @@ export class MainMenu extends Phaser.Scene {
     }
 
     preload() {
-        this.load.json('strings', 'assets/strings.json');
+        this.load.json('strings', assetPath('assets/strings.json'));
         loadGameAudio(this);
     }
 
