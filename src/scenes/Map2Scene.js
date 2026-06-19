@@ -182,13 +182,20 @@ export class Map2Scene extends Phaser.Scene {
         // ENEMY SPAWNS 
         // ====================
         spawnEnemy(350,  150,  550,  580);
+        spawnEnemy(544,  480,  608,  128);
         spawnEnemy(1050, 820,  1300, 580);
+        spawnEnemy(1480, 1248,  1632 , 480);
         spawnEnemy(1650, 1350, 1750, 580);
+        spawnEnemy(1728, 1696, 1856, 192);
+        spawnEnemy(1984, 1824, 2208, 48);
+        spawnEnemy(3550, 3456, 3584, 128);
+        spawnEnemy(5024, 4928, 5056, 800);
         spawnEnemy(2500, 2160, 2850, 420);
         spawnEnemy(3500, 3150, 3850, 290);
         spawnEnemy(4200, 3860, 4600, 420);
         spawnEnemy(4700, 4400, 4900, 420);
         spawnEnemy(5700, 5360, 5950, 580);
+        spawnEnemy(6208, 6016, 6368, 672);
 
         this.physics.add.overlap(gameState.attackHitbox, gameState.enemies, (hitbox, enemy) => {
             if (enemy.hitCooldown || enemy.state === 'dead' || enemy.state === 'hurt') return;
