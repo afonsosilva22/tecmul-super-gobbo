@@ -323,6 +323,13 @@ export class Map2Scene extends Phaser.Scene {
             return;
         }
 
+        if (!gameState.hasWon && gameState.player.body.right >= MAP2_WIDTH - 1) {
+            gameState.hasWon = true;
+            stopMovementSounds();
+            this.scene.start('ScoreScene', { finishTime: formatTimer(gameState.elapsedTime) });
+            return;
+        }
+
         this.playerController.update();
 
         // ====================
