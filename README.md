@@ -1,5 +1,9 @@
 # Super Gobbo
 
+<div align="center">
+  <img src="https://github.com/afonsosilva22/tecmul-super-gobbo/blob/main/images/gobboScreen.png?raw=true" width="700">
+</div>
+
 ## Grupo: 
 Afonso Silva, nº 33276
 Guilherme Maciel, nº 33245
@@ -20,17 +24,29 @@ Ao abrir o jogo somos deparados com um menu inicial, neste temos as opções de:
 - ver os controlos, o que demonstra os controlos do jogo;
 - sair do jogo.
 
+<div align="center">
+  <img src="https://github.com/afonsosilva22/tecmul-super-gobbo/blob/main/images/startScreen.png?raw=true" width="700">
+</div>
+
 Quando o jogo é iniciado, podemos ver um mapa com o nosso jogador (Gobbo), que podemos controlar, também inimigos roxos, que caso estejam perto o suficiente do Gobbo, o iram tentar perseguir e atacar. Os inimigos têm uma barra de vida e podem ser mortos pelo Gobbo, utilizando o seu ataque de espada, igualmente o Gobbo também pode morrer se sofrer muito dano dos inimigos.
 
 A UI do jogo apresenta na esquerda uma barra de vida do Gobbo. No centro um timer de 3 minutos, que caso acabe é apresentado o ecrã de Game Over. Na direita temos um botão de pausa, que nos leva a um menu de pause, que tem as mesmas funcionalidades do menu inicial.
 
 Caso o jogador morra, é lhe apresentado um ecrã de Game Over, caso chegue ao final do 1º mapa, é transportado para o 2º mapa, caso chegue ao final deste, o jogo termina e é apresentado o tempo que o jogador demorou a percorrer o jogo.
 
+<div align="center">
+  <img src="https://github.com/afonsosilva22/tecmul-super-gobbo/blob/main/images/gameOverScreen.png?raw=true" width="700">
+</div>
+
 ## Jogabilidade:
 - movimento lateral, através das setas;
 - salto, através da seta para cima;
 - escalar vinhas, através da seta para cima;
 - 2 tipos de ataque com espada, através do botão esquerdo e direito do rato.
+
+<div align="center">
+  <img src="https://github.com/afonsosilva22/tecmul-super-gobbo/blob/main/images/howToScreen.png?raw=true" width="700">
+</div>
 
 ## Como executar:
 
