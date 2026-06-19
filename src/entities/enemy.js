@@ -1,9 +1,15 @@
 import { gameState } from '../state.js';
 
 const enemySpawns = [
-    { x: 600,  patrolStart: 480,  patrolEnd: 760  },
-    { x: 1200, patrolStart: 1050, patrolEnd: 1380 },
-    { x: 1800, patrolStart: 1650, patrolEnd: 1980 }
+    // Zona esquerda (x=0–800): dois inimigos a cobrir toda a secção
+    { x: 280,  patrolStart: 160,  patrolEnd: 560  },  // emboscada imediata à saída do spawn
+    { x: 650,  patrolStart: 480,  patrolEnd: 780  },  // guarda o final da zona esquerda
+    // Zona central (x=896–2464): três inimigos — o último perto do abismo
+    { x: 1100, patrolStart: 960,  patrolEnd: 1350 },
+    { x: 1700, patrolStart: 1520, patrolEnd: 1900 },
+    { x: 2250, patrolStart: 2060, patrolEnd: 2430 },  // beira do abismo — perigoso de combater
+    // Zona direita (x=3040–3520): guarda a saída do mapa
+    { x: 3250, patrolStart: 3080, patrolEnd: 3480 },
 ];
 
 const spawnEnemy = (scene, platformLayer, x, patrolStart, patrolEnd) => {
