@@ -3,6 +3,7 @@ const animationDefinitions = [
     { key: 'walk', texture: 'walk', start: 0, end: 5, frameRate: 10, repeat: -1 },
     { key: 'sprint', texture: 'sprint', start: 0, end: 5, frameRate: 15, repeat: -1 },
     { key: 'jump', texture: 'jump', start: 0, end: 7, frameRate: 10, repeat: -1 },
+    { key: 'climb', texture: 'climb', start: 0, end: 3, frameRate: 8, repeat: -1 },
     { key: 'attack1', texture: 'attack1', start: 0, end: 5, frameRate: 14, repeat: 0 },
     { key: 'attack2', texture: 'attack2', start: 0, end: 5, frameRate: 14, repeat: 0 },
     { key: 'enemy1_walk', texture: 'enemy1_walk', start: 0, end: 8, frameRate: 10, repeat: -1 },

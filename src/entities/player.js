@@ -62,6 +62,8 @@ const handleMovement = () => {
     const climbSpeed = -100;
     const onGround = player.body.blocked.down;
     const touchingVine = gameState.onVine;
+    const isClimbing = touchingVine && gameState.cursors.up.isDown;
+    const isHangingOnVine = touchingVine && !onGround;
 
     gameState.onVine = false;
 
@@ -70,16 +72,14 @@ const handleMovement = () => {
         return;
     }
 
-    if (touchingVine && gameState.cursors.up.isDown) {
+    if (isClimbing) {
         stopMovementSounds();
         player.body.setAllowGravity(false);
         player.body.setVelocityY(climbSpeed);
-        player.anims.play('walk', true);
-    } else if (touchingVine && !onGround) {
+    } else if (isHangingOnVine) {
         stopMovementSounds();
         player.body.setAllowGravity(false);
         player.body.setVelocityY(0);
-        player.anims.play('idle', true);
     } else {
         player.body.setAllowGravity(true);
     }
@@ -88,7 +88,13 @@ const handleMovement = () => {
         player.body.setVelocityX(-speed);
         player.setFlipX(true);
 
-        if (!onGround) {
+        if (isClimbing) {
+            stopMovementSounds();
+            player.anims.play('climb', true);
+        } else if (isHangingOnVine) {
+            stopMovementSounds();
+            player.anims.play('idle', true);
+        } else if (!onGround) {
             stopMovementSounds();
             player.anims.play('jump', true);
         } else if (isSprinting) {
@@ -104,7 +110,13 @@ const handleMovement = () => {
         player.body.setVelocityX(speed);
         player.setFlipX(false);
 
-        if (!onGround) {
+        if (isClimbing) {
+            stopMovementSounds();
+            player.anims.play('climb', true);
+        } else if (isHangingOnVine) {
+            stopMovementSounds();
+            player.anims.play('idle', true);
+        } else if (!onGround) {
             stopMovementSounds();
             player.anims.play('jump', true);
         } else if (isSprinting) {
@@ -119,7 +131,14 @@ const handleMovement = () => {
     } else {
         stopMovementSounds();
         player.body.setVelocityX(0);
-        player.anims.play(onGround ? 'idle' : 'jump', true);
+
+        if (isClimbing) {
+            player.anims.play('climb', true);
+        } else if (isHangingOnVine) {
+            player.anims.play('idle', true);
+        } else {
+            player.anims.play(onGround ? 'idle' : 'jump', true);
+        }
     }
 
     if (Phaser.Input.Keyboard.JustDown(gameState.cursors.up) && onGround) {

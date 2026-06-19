@@ -21,6 +21,7 @@ export class GameScene extends Phaser.Scene {
         this.load.spritesheet('walk', 'assets/spritesheets/gobbo/Gobbo_Walk_6.png', { frameWidth: 32, frameHeight: 32 });
         this.load.spritesheet('sprint', 'assets/spritesheets/gobbo/Gobbo_Run_6.png', { frameWidth: 32, frameHeight: 32 });
         this.load.spritesheet('jump', 'assets/spritesheets/gobbo/Gobbo_Jump_8.png', { frameWidth: 32, frameHeight: 32 });
+        this.load.spritesheet('climb', 'assets/spritesheets/gobbo/Gobbo_Climb_4.png', { frameWidth: 32, frameHeight: 32 });
         this.load.spritesheet('attack1', 'assets/spritesheets/gobbo/Gobbo_Attack1.png', { frameWidth: 42, frameHeight: 42 });
         this.load.spritesheet('attack2', 'assets/spritesheets/gobbo/Gobbo_Attack2.png', { frameWidth: 42, frameHeight: 42 });
         this.load.spritesheet('enemy1_walk', 'assets/spritesheets/enemy/enemy1_walk.png', { frameWidth: 128, frameHeight: 128 });
