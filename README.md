@@ -41,7 +41,8 @@ Caso o jogador morra, é lhe apresentado um ecrã de Game Over, caso chegue ao f
 - movimento lateral, através das setas;
 - salto, através da seta para cima;
 - escalar vinhas, através da seta para cima;
-- 2 tipos de ataque com espada, através do botão esquerdo e direito do rato.
+- 2 tipos de ataque com espada, através do botão esquerdo e direito do rato;
+- empurrar caixas, através do botão E.
 
 <div align="center">
   <img src="https://github.com/afonsosilva22/tecmul-super-gobbo/blob/main/images/howToScreen.png?raw=true" width="700">
