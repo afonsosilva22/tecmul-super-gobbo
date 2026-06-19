@@ -6,8 +6,9 @@ export class PauseScene extends Phaser.Scene {
         super({ key: 'PauseScene' });
     }
 
-    create() {
+    create(data) {
         const text = (key) => getText(this, key);
+        const callerScene = data?.callerScene ?? 'GameScene';
 
         this.scene.bringToTop();
         this.cameras.main.setBackgroundColor('#1a1a1a');
@@ -73,14 +74,14 @@ export class PauseScene extends Phaser.Scene {
 
         createMenuButton(320, 145, text('continue'), 0x27ae60, 0x2ecc71, () => {
             gameState.isPaused = false;
-            this.scene.resume('GameScene');
+            this.scene.resume(callerScene);
             this.scene.stop();
         });
         createMenuButton(320, 200, text('options'), 0x2980b9, 0x3498db, () => this.scene.start('OptionsScene', { returnScene: 'PauseScene' }));
         createMenuButton(320, 255, text('howToPlay'), 0x2980b9, 0x3498db, () => this.scene.start('HowToPlayScene', { returnScene: 'PauseScene' }));
         createMenuButton(320, 310, text('quit'), 0xc0392b, 0xe74c3c, () => {
             gameState.isPaused = false;
-            this.scene.stop('GameScene');
+            this.scene.stop(callerScene);
             this.scene.start('MainMenu');
         });
     }

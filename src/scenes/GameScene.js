@@ -218,7 +218,7 @@ export class GameScene extends Phaser.Scene {
         if (!gameState.hasWon && gameState.player.body.right >= gameState.mapRightEdge - 1) {
             gameState.hasWon = true;
             stopMovementSounds();
-            // Transição para o Mapa 2 — passa o HP actual para o jogador não começar cheio
+            // Transição para o Mapa 2 
             this.scene.start('Map2Scene', { playerHP: gameState.playerHP });
             return;
         }

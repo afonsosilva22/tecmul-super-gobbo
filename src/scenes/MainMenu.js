@@ -4,7 +4,7 @@ import { loadGameAudio, playBackgroundMusic } from '../utils/audio.js';
 
 export class MainMenu extends Phaser.Scene {
     constructor() {
-        super({ key: 'MainMenu' }); // Define a chave identificadora desta cena
+        super({ key: 'MainMenu' }); 
     }
 
     preload() {
@@ -18,10 +18,9 @@ export class MainMenu extends Phaser.Scene {
         playBackgroundMusic(this);
         this.input.once('pointerdown', () => playBackgroundMusic(this));
 
-        // Altera a cor de fundo apenas para o ecrã do menu
         this.cameras.main.setBackgroundColor('#1a1a1a'); 
 
-        // Adiciona o título do jogo centralizado com um estilo mais polido
+        // Adiciona o título do jogo centralizado 
         this.add.text(320, 80, text('title'), { 
             fontSize: '42px', 
             fill: '#ffffff',
