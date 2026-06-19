@@ -41,6 +41,7 @@ export class GameScene extends Phaser.Scene {
         this.load.image('vine', assetPath('assets/TIlesetMaps/tiles/vine.png'));
         this.load.spritesheet('vine_tip', assetPath('assets/TIlesetMaps/tiles/vine_tip.png'), { frameWidth: 32, frameHeight: 32 });
         this.load.spritesheet('vine2', assetPath('assets/TIlesetMaps/tiles/vine2.png'), { frameWidth: 32, frameHeight: 32 });
+        this.load.image('espinhos', assetPath('assets/TIlesetMaps/tiles/EspinhosJogo.png'));
     }
 
     create() {
@@ -51,7 +52,10 @@ export class GameScene extends Phaser.Scene {
         this.cameras.main.setBackgroundColor('#b9eaff');
         createGameAnimations(this);
 
-        const { platformLayer, vines } = this.createMap();
+        const { platformLayer, vines, spikeMin, spikeMax } = this.createMap();
+        this.platformLayer = platformLayer;
+        this.spikeMin = spikeMin;
+        this.spikeMax = spikeMax;
         const pauseButton = this.createPauseButton(text);
 
         this.playerController = createPlayer(this, {
@@ -61,6 +65,10 @@ export class GameScene extends Phaser.Scene {
             text
         });
         createEnemies(this, platformLayer, this.playerController);
+
+        // ====================
+        // SPIKES (checked in update via getTileAtWorldXY)
+        // ====================
 
         this.createTimerHud();
         this.configureWorld();
@@ -86,17 +94,20 @@ export class GameScene extends Phaser.Scene {
         const tsBGDeco2 = map.addTilesetImage('background_deco_2', 'bg_deco');
         const tsBGForest3 = map.addTilesetImage('backgroundforest_3', 'bg_forest');
         const tsBFTiles = map.addTilesetImage('BF_Tiles', 'tiles_darkforest');
+        const tsEspinhos = map.addTilesetImage('EspinhosTiled', 'espinhos');
 
         map.createLayer('Background', [tsDarkForest, tsBGDeco, tsDarkForest2, tsBGDeco2], 0, 0);
         map.createLayer('backgroundForest', [tsBGForest, tsBGForest3], 0, 0);
         map.createLayer('BackgroundBush', tsBGBush, 0, 0);
 
-        const platformLayer = map.createLayer('Plataforma', [tsDarkForest, tsBFTiles], 0, 0);
+        const platformLayer = map.createLayer('Plataforma', [tsDarkForest, tsBFTiles, tsEspinhos], 0, 0);
         platformLayer.setCollisionByExclusion([-1]);
 
         return {
             platformLayer,
-            vines: this.createVines(map)
+            vines: this.createVines(map),
+            spikeMin: tsEspinhos ? tsEspinhos.firstgid : -1,
+            spikeMax: tsEspinhos ? tsEspinhos.firstgid + tsEspinhos.total : -1
         };
     }
 
@@ -227,5 +238,15 @@ export class GameScene extends Phaser.Scene {
 
         this.playerController.update();
         updateEnemies();
+
+        if (this.spikeMin >= 0 && gameState.playerHP > 0) {
+            const p = gameState.player;
+            const tile = this.platformLayer.getTileAtWorldXY(p.x, p.body.bottom + 1);
+            if (tile && tile.index >= this.spikeMin && tile.index < this.spikeMax) {
+                stopMovementSounds();
+                gameState.playerHP = 0;
+                this.scene.start('GameOverScene');
+            }
+        }
     }
 }
