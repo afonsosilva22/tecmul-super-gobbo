@@ -27,15 +27,15 @@ export class GameScene extends Phaser.Scene {
         this.load.spritesheet('enemy1_walk', 'assets/spritesheets/enemy/enemy1_walk.png', { frameWidth: 128, frameHeight: 128 });
         this.load.spritesheet('enemy1_attack1', 'assets/spritesheets/enemy/enemy1_attack1.png', { frameWidth: 128, frameHeight: 128 });
 
-        this.load.tilemapTiledJSON('map', 'assets/TilesetMaps/Map1/Mapa1.tmj');
-        this.load.image('tiles_darkforest', 'assets/TilesetMaps/tiles/Tilesheet - WOODS.png');
-        this.load.image('bg_deco', 'assets/TilesetMaps/tiles/BACKGROUND.png');
-        this.load.image('bg_bush', 'assets/TilesetMaps/tiles/BUSH - BACKGROUND.png');
-        this.load.image('bg_forest', 'assets/TilesetMaps/tiles/WOODS - Second.png');
-        this.load.image('bg_forest2', 'assets/TilesetMaps/tiles/WOODS - Third.png');
-        this.load.image('vine', 'assets/TilesetMaps/tiles/vine.png');
-        this.load.spritesheet('vine_tip', 'assets/TilesetMaps/tiles/vine_tip.png', { frameWidth: 32, frameHeight: 32 });
-        this.load.spritesheet('vine2', 'assets/TilesetMaps/tiles/vine2.png', { frameWidth: 32, frameHeight: 32 });
+        this.load.tilemapTiledJSON('map', 'assets/TIlesetMaps/Map1/Mapa1.tmj');
+        this.load.image('tiles_darkforest', 'assets/TIlesetMaps/tiles/Tilesheet - WOODS.png');
+        this.load.image('bg_deco', 'assets/TIlesetMaps/tiles/BACKGROUND.png');
+        this.load.image('bg_bush', 'assets/TIlesetMaps/tiles/BUSH - BACKGROUND.png');
+        this.load.image('bg_forest', 'assets/TIlesetMaps/tiles/WOODS - Second.png');
+        this.load.image('bg_forest2', 'assets/TIlesetMaps/tiles/WOODS - Third.png');
+        this.load.image('vine', 'assets/TIlesetMaps/tiles/vine.png');
+        this.load.spritesheet('vine_tip', 'assets/TIlesetMaps/tiles/vine_tip.png', { frameWidth: 32, frameHeight: 32 });
+        this.load.spritesheet('vine2', 'assets/TIlesetMaps/tiles/vine2.png', { frameWidth: 32, frameHeight: 32 });
     }
 
     create() {
