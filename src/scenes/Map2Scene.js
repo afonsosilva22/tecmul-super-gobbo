@@ -10,7 +10,7 @@ const MAP2_WIDTH  = 6400;
 const MAP2_HEIGHT = 960;
 
 // ============================================================================
-// CLASSE DO MAPA 2 — BLACK FOREST
+// CLASSE DO MAPA 2 BLACK FOREST
 // ============================================================================
 export class Map2Scene extends Phaser.Scene {
     constructor() {
@@ -42,6 +42,7 @@ export class Map2Scene extends Phaser.Scene {
         this.load.spritesheet('m2_ts_vineG',   assetPath('assets/TIlesetMaps/Map2/tiles/vineG.png'),   { frameWidth: 32, frameHeight: 32 });
         this.load.spritesheet('m2_ts_vinetip', assetPath('assets/TIlesetMaps/tiles/vine_tip.png'),     { frameWidth: 32, frameHeight: 32 });
         this.load.image('m2_ts_vine',          assetPath('assets/TIlesetMaps/tiles/vine.png'));
+        this.load.spritesheet('push', assetPath('assets/GobboAnims/Gobbo_Push_6.png'), { frameWidth: 32, frameHeight: 32 });
         this.load.spritesheet('enemy1_idle', assetPath('assets/spritesheets/enemy/Idle.png'), { frameWidth: 128, frameHeight: 128 });
         this.load.spritesheet('enemy1_hurt', assetPath('assets/spritesheets/enemy/Hurt.png'), { frameWidth: 128, frameHeight: 128 });
         this.load.spritesheet('enemy1_dead', assetPath('assets/spritesheets/enemy/Dead.png'), { frameWidth: 128, frameHeight: 128 });
@@ -90,7 +91,7 @@ export class Map2Scene extends Phaser.Scene {
             map.addTilesetImage('vinhaTile',       'm2_ts_vine'),
         ];
 
-        // Camadas de fundo — ordem bottom→top
+        // Camadas de fundo em ordem bottom to top
         map.createLayer('BG_CEU2',    tsAll, 0, 0);
         map.createLayer('BG_CEU1',    tsAll, 0, 0);
         map.createLayer('BG_tree5',   tsAll, 0, 0);
@@ -104,7 +105,7 @@ export class Map2Scene extends Phaser.Scene {
         map.createLayer('BG_CHAO2',   tsAll, 0, 0);
         map.createLayer('BG_chao1',   tsAll, 0, 0);
 
-        const platformLayer = map.createLayer('Plataforma', tsAll, 0, 0);
+        const platformLayer = map.createLayer('PlataformaPrincipal', tsAll, 0, 0);
         platformLayer.setCollisionByExclusion([-1]);
 
         const foregroundLayer = map.createLayer('ForeGround', tsAll, 0, 0);
@@ -177,7 +178,7 @@ export class Map2Scene extends Phaser.Scene {
         };
 
         // ====================
-        // ENEMY SPAWNS — MAPA 2 
+        // ENEMY SPAWNS 
         // ====================
         spawnEnemy(350,  150,  550,  580);
         spawnEnemy(1050, 820,  1300, 580);
@@ -223,11 +224,39 @@ export class Map2Scene extends Phaser.Scene {
         });
 
         // ====================
+        // BOXES
+        // ====================
+        if (!this.textures.exists('box')) {
+            const boxGfx = this.add.graphics();
+            boxGfx.fillStyle(0x8B4513, 1);
+            boxGfx.lineStyle(2, 0x5C2E00, 1);
+            boxGfx.fillRect(0, 0, 32, 64);
+            boxGfx.strokeRect(0, 0, 32, 64);
+            boxGfx.generateTexture('box', 32, 64);
+            boxGfx.destroy();
+        }
+
+        this.boxes = [];
+        this.pushKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
+        const spawnBox = (x, y = 500) => {
+            const box = this.physics.add.sprite(x, y, 'box');
+            box.body.setCollideWorldBounds(true);
+            box.body.pushable = false;
+            this.physics.add.collider(box, platformLayer);
+            this.physics.add.collider(gameState.player, box);
+            this.boxes.push(box);
+        };
+
+        spawnBox(1888, 192);
+        spawnBox(2048,448);
+        spawnBox(2592, 352);
+
+        // ====================
         // TIMER HUD
         // ====================
-        // O tempo restante vem do Mapa 1; se não houver, dá 2 minutos novos
+        // O tempo restante vem do Mapa 1; 
         if (!gameState.remainingTime || gameState.remainingTime <= 0) {
-            gameState.timerDuration  = 120000;
+            gameState.timerDuration  = 180000;
             gameState.remainingTime  = 120000;
             gameState.elapsedTime    = 0;
         }
@@ -331,6 +360,27 @@ export class Map2Scene extends Phaser.Scene {
         }
 
         this.playerController.update();
+
+        // ====================
+        // BOX PUSH
+        // ====================
+        if (this.boxes) {
+            const pl = gameState.player;
+            const pushKeyDown = this.pushKey.isDown;
+            this.boxes.forEach(bx => {
+                if (!bx.active) return;
+                const xDiff  = pl.x - bx.x;
+                const yDiff  = Math.abs(pl.y - bx.y);
+                const nearby = Math.abs(xDiff) < 36 && yDiff < 24;
+                const pushing = Math.abs(pl.body.velocity.x) > 10;
+                if (pushKeyDown && nearby && pushing && pl.body.onFloor()) {
+                    pl.anims.play('push', true);
+                    bx.body.setVelocityX(pl.body.velocity.x * 0.8);
+                } else {
+                    bx.body.setVelocityX(0);
+                }
+            });
+        }
 
         // ====================
         // ENEMY AI

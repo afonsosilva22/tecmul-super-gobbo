@@ -23,6 +23,7 @@ export class GameScene extends Phaser.Scene {
         this.load.spritesheet('sprint', assetPath('assets/spritesheets/gobbo/Gobbo_Run_6.png'), { frameWidth: 32, frameHeight: 32 });
         this.load.spritesheet('jump', assetPath('assets/spritesheets/gobbo/Gobbo_Jump_8.png'), { frameWidth: 32, frameHeight: 32 });
         this.load.spritesheet('climb', assetPath('assets/spritesheets/gobbo/Gobbo_Climb_4.png'), { frameWidth: 32, frameHeight: 32 });
+        this.load.spritesheet('push',  assetPath('assets/GobboAnims/Gobbo_Push_6.png'),              { frameWidth: 32, frameHeight: 32 });
         this.load.spritesheet('attack1', assetPath('assets/spritesheets/gobbo/Gobbo_Attack1.png'), { frameWidth: 42, frameHeight: 42 });
         this.load.spritesheet('attack2', assetPath('assets/spritesheets/gobbo/Gobbo_Attack2.png'), { frameWidth: 42, frameHeight: 42 });
         this.load.spritesheet('enemy1_walk',    assetPath('assets/spritesheets/enemy/enemy1_walk.png'),    { frameWidth: 128, frameHeight: 128 });
@@ -84,12 +85,13 @@ export class GameScene extends Phaser.Scene {
         const tsDarkForest2 = map.addTilesetImage('Tiles_DarkForest_2', 'tiles_darkforest');
         const tsBGDeco2 = map.addTilesetImage('background_deco_2', 'bg_deco');
         const tsBGForest3 = map.addTilesetImage('backgroundforest_3', 'bg_forest');
+        const tsBFTiles = map.addTilesetImage('BF_Tiles', 'tiles_darkforest');
 
         map.createLayer('Background', [tsDarkForest, tsBGDeco, tsDarkForest2, tsBGDeco2], 0, 0);
         map.createLayer('backgroundForest', [tsBGForest, tsBGForest3], 0, 0);
         map.createLayer('BackgroundBush', tsBGBush, 0, 0);
 
-        const platformLayer = map.createLayer('Plataforma', tsDarkForest, 0, 0);
+        const platformLayer = map.createLayer('Plataforma', [tsDarkForest, tsBFTiles], 0, 0);
         platformLayer.setCollisionByExclusion([-1]);
 
         return {
@@ -132,7 +134,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     createTimerHud() {
-        gameState.timerDuration = 120000;
+        gameState.timerDuration = 180000;
         gameState.remainingTime = gameState.timerDuration;
         gameState.elapsedTime = 0;
         gameState.timerText = this.add.text(320, 10, '2:00', {
@@ -218,7 +220,7 @@ export class GameScene extends Phaser.Scene {
         if (!gameState.hasWon && gameState.player.body.right >= gameState.mapRightEdge - 1) {
             gameState.hasWon = true;
             stopMovementSounds();
-            // Transição para o Mapa 2 
+            // TransiÃƒÂ§ÃƒÂ£o para o Mapa 2 
             this.scene.start('Map2Scene', { playerHP: gameState.playerHP });
             return;
         }
