@@ -24,11 +24,12 @@ export class HowToPlayScene extends Phaser.Scene {
             text('movementControls'),
             text('jumpClimbControls'),
             text('sprintControls'),
-            text('swordControls')
+            text('swordControls'),
+            text('pushControls')
         ];
 
         controls.forEach((controlText, index) => {
-            this.add.text(320, 135 + index * 42, controlText, {
+            this.add.text(320, 125 + index * 34, controlText, {
                 fontSize: '20px',
                 fill: '#ffffff',
                 fontFamily: 'monospace',
