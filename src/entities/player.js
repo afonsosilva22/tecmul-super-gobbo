@@ -58,7 +58,7 @@ const handleMovement = () => {
     const sprintSpeed = 260;
     const isSprinting = gameState.shiftKey.isDown;
     const speed = isSprinting ? sprintSpeed : walkSpeed;
-    const jumpPower = -300;
+    const jumpPower = -320;
     const climbSpeed = -100;
     const onGround = player.body.blocked.down;
     const touchingVine = gameState.onVine;

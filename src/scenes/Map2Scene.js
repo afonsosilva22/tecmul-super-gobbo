@@ -43,6 +43,7 @@ export class Map2Scene extends Phaser.Scene {
         this.load.spritesheet('m2_ts_vinetip', assetPath('assets/TIlesetMaps/tiles/vine_tip.png'),     { frameWidth: 32, frameHeight: 32 });
         this.load.image('m2_ts_vine',          assetPath('assets/TIlesetMaps/tiles/vine.png'));
         this.load.spritesheet('push', assetPath('assets/GobboAnims/Gobbo_Push_6.png'), { frameWidth: 32, frameHeight: 32 });
+        this.load.image('box_sprite', assetPath('assets/TIlesetMaps/tiles/CaixaJogoPequena.png'));
         this.load.spritesheet('enemy1_idle', assetPath('assets/spritesheets/enemy/Idle.png'), { frameWidth: 128, frameHeight: 128 });
         this.load.spritesheet('enemy1_hurt', assetPath('assets/spritesheets/enemy/Hurt.png'), { frameWidth: 128, frameHeight: 128 });
         this.load.spritesheet('enemy1_dead', assetPath('assets/spritesheets/enemy/Dead.png'), { frameWidth: 128, frameHeight: 128 });
@@ -226,20 +227,18 @@ export class Map2Scene extends Phaser.Scene {
         // ====================
         // BOXES
         // ====================
-        if (!this.textures.exists('box')) {
-            const boxGfx = this.add.graphics();
-            boxGfx.fillStyle(0x8B4513, 1);
-            boxGfx.lineStyle(2, 0x5C2E00, 1);
-            boxGfx.fillRect(0, 0, 32, 64);
-            boxGfx.strokeRect(0, 0, 32, 64);
-            boxGfx.generateTexture('box', 32, 64);
-            boxGfx.destroy();
+        if (!this.textures.exists('box_64')) {
+            const rt = this.add.renderTexture(0, 0, 32, 64);
+            rt.draw('box_sprite', 0, 0);
+            rt.draw('box_sprite', 0, 32);
+            rt.saveTexture('box_64');
+            rt.destroy();
         }
 
         this.boxes = [];
         this.pushKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
         const spawnBox = (x, y = 500) => {
-            const box = this.physics.add.sprite(x, y, 'box');
+            const box = this.physics.add.image(x, y, 'box_64');
             box.body.setCollideWorldBounds(true);
             box.body.pushable = false;
             this.physics.add.collider(box, platformLayer);
