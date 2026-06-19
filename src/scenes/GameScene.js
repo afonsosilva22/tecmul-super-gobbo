@@ -25,8 +25,11 @@ export class GameScene extends Phaser.Scene {
         this.load.spritesheet('climb', assetPath('assets/spritesheets/gobbo/Gobbo_Climb_4.png'), { frameWidth: 32, frameHeight: 32 });
         this.load.spritesheet('attack1', assetPath('assets/spritesheets/gobbo/Gobbo_Attack1.png'), { frameWidth: 42, frameHeight: 42 });
         this.load.spritesheet('attack2', assetPath('assets/spritesheets/gobbo/Gobbo_Attack2.png'), { frameWidth: 42, frameHeight: 42 });
-        this.load.spritesheet('enemy1_walk', assetPath('assets/spritesheets/enemy/enemy1_walk.png'), { frameWidth: 128, frameHeight: 128 });
+        this.load.spritesheet('enemy1_walk',    assetPath('assets/spritesheets/enemy/enemy1_walk.png'),    { frameWidth: 128, frameHeight: 128 });
         this.load.spritesheet('enemy1_attack1', assetPath('assets/spritesheets/enemy/enemy1_attack1.png'), { frameWidth: 128, frameHeight: 128 });
+        this.load.spritesheet('enemy1_idle',    assetPath('assets/spritesheets/enemy/Idle.png'),           { frameWidth: 128, frameHeight: 128 });
+        this.load.spritesheet('enemy1_hurt',    assetPath('assets/spritesheets/enemy/Hurt.png'),           { frameWidth: 128, frameHeight: 128 });
+        this.load.spritesheet('enemy1_dead',    assetPath('assets/spritesheets/enemy/Dead.png'),           { frameWidth: 128, frameHeight: 128 });
 
         this.load.tilemapTiledJSON('map', assetPath('assets/TIlesetMaps/Map1/Mapa1.tmj'));
         this.load.image('tiles_darkforest', assetPath('assets/TIlesetMaps/tiles/Tilesheet - WOODS.png'));
@@ -116,12 +119,12 @@ export class GameScene extends Phaser.Scene {
             const sx = obj.x + obj.width / 2;
             const sy = obj.y - obj.height / 2;
 
-            if (tileId === 1009) {
+            if (tileId === 577) {
                 this.add.image(sx, sy, 'vine');
-            } else if (tileId >= 1010 && tileId <= 1013) {
-                this.add.image(sx, sy, 'vine_tip', tileId - 1010);
-            } else if (tileId >= 1014 && tileId <= 1017) {
-                this.add.image(sx, sy, 'vine2', tileId - 1014);
+            } else if (tileId >= 578 && tileId <= 581) {
+                this.add.image(sx, sy, 'vine_tip', tileId - 578);
+            } else if (tileId >= 582 && tileId <= 585) {
+                this.add.image(sx, sy, 'vine2', tileId - 582);
             }
         });
 
