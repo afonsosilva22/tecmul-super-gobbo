@@ -220,7 +220,7 @@ export class GameScene extends Phaser.Scene {
         if (!gameState.hasWon && gameState.player.body.right >= gameState.mapRightEdge - 1) {
             gameState.hasWon = true;
             stopMovementSounds();
-            // TransiÃƒÂ§ÃƒÂ£o para o Mapa 2 
+            // Transição para o Mapa 2 
             this.scene.start('Map2Scene', { playerHP: gameState.playerHP });
             return;
         }
