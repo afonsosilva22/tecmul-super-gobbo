@@ -45,7 +45,7 @@ Caso o jogador morra, é lhe apresentado um ecrã de Game Over, caso chegue ao f
 - empurrar caixas, através do botão E.
 
 <div align="center">
-  <img src="https://github.com/afonsosilva22/tecmul-super-gobbo/blob/main/images/howToScreen.png?raw=true" width="700">
+  <img src="https://github.com/afonsosilva22/tecmul-super-gobbo/blob/main/images/howToPlayScreen.png?raw=true" width="700">
 </div>
 
 ## Como executar:
