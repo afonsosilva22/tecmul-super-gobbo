@@ -44,6 +44,7 @@ export class Map2Scene extends Phaser.Scene {
         this.load.image('m2_ts_vine',          assetPath('assets/TIlesetMaps/tiles/vine.png'));
         this.load.spritesheet('push', assetPath('assets/GobboAnims/Gobbo_Push_6.png'), { frameWidth: 32, frameHeight: 32 });
         this.load.image('box_sprite', assetPath('assets/TIlesetMaps/tiles/CaixaJogoPequena.png'));
+        this.load.image('espinhos', assetPath('assets/TIlesetMaps/tiles/EspinhosJogo.png'));
         this.load.spritesheet('enemy1_idle', assetPath('assets/spritesheets/enemy/Idle.png'), { frameWidth: 128, frameHeight: 128 });
         this.load.spritesheet('enemy1_hurt', assetPath('assets/spritesheets/enemy/Hurt.png'), { frameWidth: 128, frameHeight: 128 });
         this.load.spritesheet('enemy1_dead', assetPath('assets/spritesheets/enemy/Dead.png'), { frameWidth: 128, frameHeight: 128 });
@@ -90,6 +91,7 @@ export class Map2Scene extends Phaser.Scene {
             map.addTilesetImage('VinhaGrandeTile', 'm2_ts_vineG'),
             map.addTilesetImage('VinhaTipTile',    'm2_ts_vinetip'),
             map.addTilesetImage('vinhaTile',       'm2_ts_vine'),
+            map.addTilesetImage('EspinhosTiled',   'espinhos'),
         ];
 
         // Camadas de fundo em ordem bottom to top
@@ -149,6 +151,14 @@ export class Map2Scene extends Phaser.Scene {
         
         gameState.player.setPosition(100, 580);
         if (data && data.playerHP != null) gameState.playerHP = data.playerHP;
+
+        // ====================
+        // SPIKES 
+        // ====================
+        this.platformLayer = platformLayer;
+        const spikeTileset = map.getTileset('EspinhosTiled');
+        this.spikeMin = spikeTileset ? spikeTileset.firstgid : -1;
+        this.spikeMax = spikeTileset ? this.spikeMin + spikeTileset.total : -1;
 
         // ====================
         // ENEMIES
@@ -366,6 +376,16 @@ export class Map2Scene extends Phaser.Scene {
         }
 
         this.playerController.update();
+
+        if (this.spikeMin >= 0 && gameState.playerHP > 0) {
+            const p = gameState.player;
+            const tile = this.platformLayer.getTileAtWorldXY(p.x, p.body.bottom + 1);
+            if (tile && tile.index >= this.spikeMin && tile.index < this.spikeMax) {
+                stopMovementSounds();
+                gameState.playerHP = 0;
+                this.scene.start('GameOverScene');
+            }
+        }
 
         // ====================
         // BOX PUSH
